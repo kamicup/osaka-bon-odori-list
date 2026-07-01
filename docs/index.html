@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大阪市盆踊りカレンダー 2026</title>
+    
+    <!-- PWA用のメタタグ & リンク -->
+    <meta name="theme-color" content="#070913">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="manifest" href="./manifest.json">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
@@ -473,7 +481,7 @@
             text-decoration: underline;
         }
 
-        /* スマホ向けレスポンシブ最適化 (カレンダーを横スクロールではなくスケールダウンで画面に収める) */
+        /* スマホ向けレスポンシブ最適化 */
         @media (max-width: 600px) {
             body {
                 padding-bottom: 40px;
@@ -846,6 +854,15 @@
                 currentTheme = 'dark';
             }
         });
+
+        // サービスワーカーの登録スクリプトの追加
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('ServiceWorker registered', reg))
+                    .catch(err => console.error('ServiceWorker registration failed', err));
+            });
+        }
     </script>
 </body>
 </html>

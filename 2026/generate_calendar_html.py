@@ -60,13 +60,21 @@ for ev in events:
                 calendar_events[m][d] = []
             calendar_events[m][d].append(ev)
 
-# 2. HTMLの生成 (カレンダー引き伸ばしによる親要素崩れの防止)
+# 2. HTMLの生成 (PWAメタタグ & サービスワーカー登録を追加)
 html_template = """<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大阪市盆踊りカレンダー 2026</title>
+    
+    <!-- PWA用のメタタグ & リンク -->
+    <meta name="theme-color" content="#070913">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="manifest" href="./manifest.json">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
@@ -536,7 +544,7 @@ html_template = """<!DOCTYPE html>
             text-decoration: underline;
         }
 
-        /* スマホ向けレスポンシブ最適化 (カレンダーを横スクロールではなくスケールダウンで画面に収める) */
+        /* スマホ向けレスポンシブ最適化 */
         @media (max-width: 600px) {
             body {
                 padding-bottom: 40px;
@@ -909,6 +917,15 @@ html_template = """<!DOCTYPE html>
                 currentTheme = 'dark';
             }
         });
+
+        // サービスワーカーの登録スクリプトの追加
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('ServiceWorker registered', reg))
+                    .catch(err => console.error('ServiceWorker registration failed', err));
+            });
+        }
     </script>
 </body>
 </html>
@@ -919,9 +936,9 @@ calendar_events_json = json.dumps(calendar_events, ensure_ascii=False)
 
 html_content = html_template.replace('##EVENT_DATA_JSON##', events_json).replace('##CALENDAR_EVENTS_JSON##', calendar_events_json)
 
-# 出力先を docs/index.html に変更
+# 出力先
 output_path = '/Users/yoshikazuhashimoto/tmp/docs/index.html'
 with open(output_path, 'w', encoding='utf-8') as f:
     f.write(html_content)
 
-print(f"HTML Calendar generated successfully as primary public file at {output_path}")
+print(f"HTML Calendar generated successfully with PWA features at {output_path}")
