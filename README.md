@@ -14,8 +14,9 @@
     *   市と区は別の列で整理され、重点調査地域（東成・城東・中央・天王寺・浪速・都島・北・西・港）の広報誌7月号から最新の夏祭りスケジュールをすべて網羅しています。
 
 *   **HTML版インタラクティブカレンダー (GitHub Pages公開・PC/スマホ両対応)**:
-    [docs/index.html](file:///Users/yoshikazuhashimoto/tmp/docs/index.html)
-    *   **GitHub Pages公開**: 本ファイルは GitHub Pages にホスティングされるよう設定されています。
+    *   **一般公開用URL (Webで直接開く)**: [https://kamicup.github.io/osaka-bon-odori-list/](https://kamicup.github.io/osaka-bon-odori-list/)
+    *   **ローカルファイル**: [docs/index.html](file:///Users/yoshikazuhashimoto/tmp/docs/index.html)
+    *   **GitHub Pages公開**: 本ファイルは GitHub Pages にホスティングされ、上記URLで全世界に公開されています。
     *   **インタラクティブ仕様**: カレンダーの日付マスをクリックすると、その日に開催されるすべての盆踊りの詳細（お祭り名称、会場場所、特記事項、情報ソースURLへの直接リンク）がポップアップモーダルで綺麗に表示されます。
     *   **テーマ切り替え**: 画面右上から「ライトモード（白基調）」と「ダークモード（お祭り夜空風の深紺）」をワンクリックで切り替え可能です。
     *   **スマホ表示最適化**: スマホでは横スクロールを発生させず、画面幅にすっぽりとカレンダーがスケールダウンして収まります。予定がある日はバッジで件数が示され、タップして詳細が開きます。
