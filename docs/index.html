@@ -161,11 +161,17 @@
             font-weight: 400;
         }
 
-        /* テーマ切り替えスイッチ */
-        .theme-switch {
+        /* ヘッダー操作ボタン */
+        .header-actions {
             position: absolute;
             top: 10px;
             right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+        }
+
+        .header-action-btn {
             background: var(--container-bg);
             border: 1px solid var(--border-color);
             color: var(--text-color);
@@ -175,12 +181,19 @@
             font-weight: 500;
             font-size: 0.9rem;
             transition: all 0.2s;
-            z-index: 20;
         }
 
-        .theme-switch:hover {
+        .header-action-btn:hover {
             background: var(--cell-hover-bg);
             border-color: var(--primary-color);
+        }
+
+        .install-btn {
+            display: none;
+        }
+
+        .install-btn.visible {
+            display: inline-block;
         }
 
         /* カレンダーメインレイアウト */
@@ -481,6 +494,29 @@
             text-decoration: underline;
         }
 
+        .install-intro {
+            color: var(--text-color);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .install-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 0;
+            padding-left: 22px;
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+
+        .install-note {
+            margin-top: 16px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
         /* スマホ向けレスポンシブ最適化 */
         @media (max-width: 600px) {
             body {
@@ -526,11 +562,16 @@
             header p {
                 font-size: 1.0rem;
             }
-            .theme-switch {
+            .header-actions {
                 position: static;
                 margin-top: 5px;
-                display: inline-block;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
                 width: auto;
+            }
+            .header-action-btn {
                 font-size: 0.85rem;
                 padding: 8px 16px;
             }
@@ -661,7 +702,10 @@
 
     <header>
         <div class="header-inner">
-            <button class="theme-switch" id="themeBtn">ライトモードにする</button>
+            <div class="header-actions">
+                <button class="header-action-btn install-btn" id="installBtn" type="button">アプリに追加</button>
+                <button class="header-action-btn theme-switch" id="themeBtn" type="button">ライトモードにする</button>
+            </div>
             <h1>大阪市盆踊りカレンダー 2026</h1>
             <p>令和8年夏（7月・8月）開催の公式アナウンス一覧</p>
         </div>
@@ -716,6 +760,17 @@
             <div class="modal-date" id="modalDate">7月25日 (土) の盆踊り</div>
             <div class="modal-events-list" id="modalEventsList">
                 <!-- イベント詳細カードはJSで描画 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- PWAインストール案内 -->
+    <div class="modal-overlay" id="installOverlay">
+        <div class="modal-content">
+            <button class="close-btn" id="installCloseBtn">&times;</button>
+            <div class="modal-date" id="installTitle">アプリとして追加</div>
+            <div id="installBody">
+                <p class="install-intro">このカレンダーをホーム画面に追加すると、通常のアプリのように開けます。</p>
             </div>
         </div>
     </div>
@@ -864,6 +919,107 @@
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closeModal();
         });
+
+        const installBtn = document.getElementById('installBtn');
+        const installOverlay = document.getElementById('installOverlay');
+        const installCloseBtn = document.getElementById('installCloseBtn');
+        const installTitle = document.getElementById('installTitle');
+        const installBody = document.getElementById('installBody');
+        let installPromptEvent = null;
+
+        function isStandaloneDisplay() {
+            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        }
+
+        function detectInstallPlatform() {
+            const ua = navigator.userAgent || '';
+            const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isAndroid = /Android/.test(ua);
+            return { isIOS, isAndroid };
+        }
+
+        function showInstallButton() {
+            if (!isStandaloneDisplay()) {
+                installBtn.classList.add('visible');
+            }
+        }
+
+        function hideInstallButton() {
+            installBtn.classList.remove('visible');
+        }
+
+        function showInstallInstructions() {
+            const { isIOS, isAndroid } = detectInstallPlatform();
+            installTitle.textContent = 'アプリとして追加';
+
+            if (isIOS) {
+                installBody.innerHTML = `
+                    <p class="install-intro">iPhone / iPadでは、ブラウザの共有メニューからホーム画面に追加します。</p>
+                    <ol class="install-steps">
+                        <li>画面下または上部の共有ボタンをタップ</li>
+                        <li>「ホーム画面に追加」を選択</li>
+                        <li>右上の「追加」をタップ</li>
+                    </ol>
+                    <p class="install-note">追加後はホーム画面のアイコンから全画面のアプリ表示で開けます。</p>
+                `;
+            } else if (isAndroid) {
+                installBody.innerHTML = `
+                    <p class="install-intro">このブラウザでは自動インストール画面を表示できませんでした。</p>
+                    <ol class="install-steps">
+                        <li>ブラウザのメニューを開く</li>
+                        <li>「アプリをインストール」または「ホーム画面に追加」を選択</li>
+                        <li>表示された確認画面で追加</li>
+                    </ol>
+                `;
+            } else {
+                installBody.innerHTML = `
+                    <p class="install-intro">ブラウザのメニューやアドレスバーに表示されるインストール操作から追加できます。</p>
+                    <p class="install-note">対応していない環境では、通常のWebページとしてそのまま利用できます。</p>
+                `;
+            }
+
+            installOverlay.classList.add('active');
+        }
+
+        function closeInstallInstructions() {
+            installOverlay.classList.remove('active');
+        }
+
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            installPromptEvent = event;
+            showInstallButton();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installPromptEvent = null;
+            hideInstallButton();
+            closeInstallInstructions();
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (installPromptEvent) {
+                const promptEvent = installPromptEvent;
+                installPromptEvent = null;
+                await promptEvent.prompt();
+                hideInstallButton();
+                return;
+            }
+
+            showInstallInstructions();
+        });
+
+        installCloseBtn.addEventListener('click', closeInstallInstructions);
+        installOverlay.addEventListener('click', (e) => {
+            if (e.target === installOverlay) closeInstallInstructions();
+        });
+
+        if (!isStandaloneDisplay()) {
+            const { isIOS, isAndroid } = detectInstallPlatform();
+            if (isIOS || isAndroid) {
+                showInstallButton();
+            }
+        }
 
         const themeBtn = document.getElementById('themeBtn');
         let currentTheme = 'dark';
