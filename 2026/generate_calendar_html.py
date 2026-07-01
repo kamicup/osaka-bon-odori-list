@@ -1,0 +1,927 @@
+import os
+import re
+import json
+
+# 1. データの読み込みとパース
+report_path = '/Users/yoshikazuhashimoto/tmp/2026/bonodori_report_2026.md'
+if not os.path.exists(report_path):
+    report_path = '/Users/yoshikazuhashimoto/.gemini/antigravity-cli/brain/29c87b03-b41e-4f3a-9939-e5f07924f889/2026/bonodori_report_2026.md'
+
+with open(report_path, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+def parse_date(date_str):
+    months_days = []
+    date_str = re.sub(r'^\d+年', '', date_str)
+    matches = re.findall(r'(\d+)月\s*(\d+)日', date_str)
+    for m, d in matches:
+        months_days.append((int(m), int(d)))
+    return months_days
+
+events = []
+table_match = re.search(r'## 1\. 信頼できる情報源に基づく盆踊り一覧.*?\n(.*?)\n\n## 2\.', content, re.DOTALL)
+if table_match:
+    table_text = table_match.group(1)
+    lines = table_text.strip().split('\n')
+    for line in lines:
+        if line.startswith('|') and not line.startswith('| ---') and not line.startswith('| 開催年月日'):
+            parts = [p.strip() for p in line.split('|')[1:-1]]
+            if len(parts) >= 8:
+                date_str = parts[0]
+                name = parts[1]
+                place = parts[2]
+                city = parts[3]
+                ward = parts[4]
+                performer = parts[5]
+                source_match = re.search(r'\[(.*?)\]\((.*?)\)', parts[6])
+                source_name = source_match.group(1) if source_match else parts[6]
+                source_url = source_match.group(2) if source_match else "#"
+                notes = parts[7]
+                
+                dates = parse_date(date_str)
+                events.append({
+                    'dates': dates,
+                    'date_str': date_str.replace('<br>', ' '),
+                    'name': name.replace('（盆踊り実施）', '').replace('（盆踊り等を実施）', ''),
+                    'place': place,
+                    'ward': ward,
+                    'performer': performer,
+                    'source_name': source_name,
+                    'source_url': source_url,
+                    'notes': notes
+                })
+
+# 日付ごとのマップ
+calendar_events = {7: {}, 8: {}}
+for ev in events:
+    for m, d in ev['dates']:
+        if m in [7, 8]:
+            if d not in calendar_events[m]:
+                calendar_events[m][d] = []
+            calendar_events[m][d].append(ev)
+
+# 2. HTMLの生成 (カレンダー引き伸ばしによる親要素崩れの防止)
+html_template = """<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大阪市盆踊りカレンダー 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #070913;
+            --container-bg: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-color: #ffffff;
+            --text-muted: #8e92a8;
+            --primary-color: #ffd700;
+            --accent-red: #ff4d4d;
+            --accent-blue: #1e90ff;
+            --cell-hover-bg: rgba(255, 255, 255, 0.07);
+            --modal-bg: rgba(15, 18, 36, 0.95);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --lantern-glow: 0 0 15px #ff8c00, 0 0 30px #ff4500;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f4f5f6;
+            --container-bg: #ffffff;
+            --border-color: #e1e3e6;
+            --text-color: #1c1c1e;
+            --text-muted: #66666d;
+            --primary-color: #b8860b;
+            --accent-red: #d32f2f;
+            --accent-blue: #1976d2;
+            --cell-hover-bg: #f0f2f5;
+            --modal-bg: rgba(255, 255, 255, 0.98);
+            --card-bg: #f5f5f7;
+            --lantern-glow: 0 0 8px rgba(255, 69, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Sans JP', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        /* 提灯装飾 */
+        .lantern-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            padding: 20px 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
+            position: relative;
+            z-index: 10;
+        }
+
+        .lantern {
+            width: 32px;
+            height: 42px;
+            background: #ff4500;
+            border-radius: 50% / 20%;
+            position: relative;
+            animation: swing 3s ease-in-out infinite alternate, glow 2s ease-in-out infinite;
+            transform-origin: top center;
+        }
+
+        .lantern::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 6px;
+            width: 20px;
+            height: 4px;
+            background: #222;
+            border-radius: 3px 3px 0 0;
+        }
+
+        .lantern::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 6px;
+            width: 20px;
+            height: 4px;
+            background: #222;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .lantern-inner {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 34px;
+            background: #ffa500;
+            border-radius: 50%;
+        }
+
+        @keyframes swing {
+            0% { transform: rotate(-6deg); }
+            100% { transform: rotate(6deg); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: var(--lantern-glow); }
+            50% { box-shadow: 0 0 25px #ff8c00, 0 0 50px #ff4500; }
+        }
+
+        /* ヘッダー */
+        header {
+            width: 100%;
+            padding: 30px 0 45px;
+            position: relative;
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            display: inline-block;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* テーマ切り替えスイッチ */
+        .theme-switch {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            z-index: 20;
+        }
+
+        .theme-switch:hover {
+            background: var(--cell-hover-bg);
+            border-color: var(--primary-color);
+        }
+
+        /* カレンダーメインレイアウト */
+        .main-container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 50px;
+            overflow: hidden;
+        }
+
+        /* 月ごとのセクション */
+        .month-section {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .month-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        /* スクロール用ラッパー */
+        .calendar-wrapper {
+            width: 100%;
+            overflow-x: visible;
+        }
+
+        /* カレンダーグリッド */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(120px, 1fr));
+            gap: 8px;
+        }
+
+        .weekday-header {
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 10px 0;
+            color: var(--text-muted);
+        }
+
+        .weekday-header.sun { color: var(--accent-red); }
+        .weekday-header.sat { color: var(--accent-blue); }
+
+        .calendar-cell {
+            background-color: rgba(255,255,255,0.01);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-height: 120px;
+            padding: 10px;
+            position: relative;
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .calendar-cell.has-events {
+            cursor: pointer;
+        }
+
+        .calendar-cell:hover {
+            background-color: var(--cell-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .calendar-cell.has-events:hover {
+            border-color: var(--primary-color);
+        }
+
+        .day-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .calendar-cell.sun .day-number { color: var(--accent-red); }
+        .calendar-cell.sat .day-number { color: var(--accent-blue); }
+        .calendar-cell.empty {
+            opacity: 0.2;
+            border-style: dashed;
+            cursor: not-allowed;
+        }
+        .calendar-cell.empty:hover {
+            transform: none;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        /* セル内イベント表示 */
+        .cell-events {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .event-badge {
+            font-size: 0.75rem;
+            background-color: var(--card-bg);
+            border-left: 3px solid var(--primary-color);
+            padding: 2px 6px;
+            border-radius: 0 4px 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .calendar-cell:hover .event-badge {
+            background-color: rgba(255,215,0,0.1);
+        }
+
+        /* イベント件数バッジ */
+        .event-count-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--accent-red);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* フッター全体のコンテナ */
+        .footer-container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 50px auto 0;
+            padding: 0 20px;
+            overflow: hidden;
+        }
+
+        footer {
+            width: 100%;
+            padding: 25px;
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--accent-red);
+            font-weight: 500;
+            line-height: 1.6;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        /* モーダルダイアログ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.8rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-date {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .modal-events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .modal-event-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .modal-event-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        [data-theme="light"] .modal-event-card h3 {
+            color: #1c1c1e;
+        }
+
+        .ward-tag {
+            font-size: 0.75rem;
+            background-color: var(--primary-color);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .detail-row {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        .detail-row strong {
+            width: 80px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .detail-row span {
+            color: var(--text-color);
+        }
+
+        .source-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .source-link:hover {
+            text-decoration: underline;
+        }
+
+        /* スマホ向けレスポンシブ最適化 (カレンダーを横スクロールではなくスケールダウンで画面に収める) */
+        @media (max-width: 600px) {
+            body {
+                padding-bottom: 40px;
+            }
+            
+            /* 提灯サイズ */
+            .lantern-container {
+                padding: 15px 0;
+            }
+            .lantern {
+                width: 28px;
+                height: 38px;
+            }
+            .lantern::before, .lantern::after {
+                width: 18px;
+                left: 5px;
+                height: 4px;
+            }
+            .lantern-inner {
+                width: 20px;
+                height: 30px;
+                left: 4px;
+                top: 4px;
+            }
+            
+            /* ヘッダー */
+            header {
+                padding: 20px 10px 30px;
+            }
+            .header-inner {
+                padding: 0 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            header h1 {
+                font-size: 2.2rem;
+                letter-spacing: 1.5px;
+                margin-bottom: 5px;
+            }
+            header p {
+                font-size: 1.0rem;
+            }
+            .theme-switch {
+                position: static;
+                margin-top: 5px;
+                display: inline-block;
+                width: auto;
+                font-size: 0.85rem;
+                padding: 8px 16px;
+            }
+            
+            /* メインコンテナ */
+            .main-container {
+                padding: 0 10px;
+                gap: 30px;
+                max-width: 100%;
+                width: 100%;
+            }
+            .month-section {
+                padding: 15px 10px;
+                border-radius: 12px;
+                max-width: 100%;
+                width: 100%;
+            }
+            .month-title {
+                font-size: 1.8rem;
+                margin-bottom: 15px;
+                padding-bottom: 8px;
+            }
+
+            /* スクロールを解除 */
+            .calendar-wrapper {
+                overflow-x: visible;
+            }
+            
+            /* カレンダーグリッドを画面幅にぴったり収める */
+            .calendar-grid {
+                min-width: 0 !important;
+                grid-template-columns: repeat(7, 1fr) !important;
+                gap: 4px;
+                width: 100%;
+            }
+
+            /* 曜日ヘッダーの縮小 */
+            .weekday-header {
+                font-size: 0.8rem;
+                padding: 5px 0;
+            }
+
+            /* セルをスケールダウン */
+            .calendar-cell {
+                min-height: 60px !important;
+                padding: 4px 2px !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: space-between;
+                border-radius: 6px;
+            }
+            .day-number {
+                font-size: 0.9rem !important;
+                margin-bottom: 0 !important;
+                line-height: 1;
+            }
+
+            /* テキストバッジは非表示 */
+            .cell-events {
+                display: none !important;
+            }
+
+            /* イベント件数バッジ */
+            .event-count-badge {
+                position: static !important;
+                margin-top: 4px;
+                width: 16px;
+                height: 16px;
+                font-size: 0.65rem !important;
+                background-color: var(--primary-color) !important;
+                color: #000 !important;
+                font-weight: 800;
+                border-radius: 50%;
+                box-shadow: none;
+            }
+            
+            /* フッター */
+            .footer-container {
+                padding: 0 10px;
+                margin-top: 30px;
+                max-width: 100%;
+                width: 100%;
+            }
+            footer {
+                padding: 20px;
+                font-size: 0.9rem;
+            }
+            
+            /* モーダル */
+            .modal-content {
+                padding: 20px 15px;
+                width: 95%;
+            }
+            .modal-date {
+                font-size: 1.2rem;
+                margin-bottom: 15px;
+            }
+            .modal-event-card {
+                padding: 15px;
+            }
+            .modal-event-card h3 {
+                font-size: 1.1rem;
+                gap: 6px;
+            }
+            .detail-row {
+                font-size: 0.85rem;
+            }
+            .detail-row strong {
+                width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 提灯デコレーション -->
+    <div class="lantern-container">
+        <div class="lantern"><div class="lantern-inner"></div></div>
+        <div class="lantern"><div class="lantern-inner"></div></div>
+        <div class="lantern"><div class="lantern-inner"></div></div>
+        <div class="lantern"><div class="lantern-inner"></div></div>
+        <div class="lantern"><div class="lantern-inner"></div></div>
+        <div class="lantern"><div class="lantern-inner"></div></div>
+        <div class="lantern"><div class="lantern-inner"></div></div>
+        <div class="lantern"><div class="lantern-inner"></div></div>
+    </div>
+
+    <header>
+        <div class="header-inner">
+            <button class="theme-switch" id="themeBtn">ライトモードにする</button>
+            <h1>大阪市盆踊りカレンダー 2026</h1>
+            <p>令和8年夏（7月・8月）開催の公式アナウンス一覧</p>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 7月カレンダー -->
+        <div class="month-section">
+            <div class="month-title">7月 July</div>
+            <div class="calendar-wrapper">
+                <div class="calendar-grid" id="julyGrid">
+                    <!-- 曜日ヘッダー -->
+                    <div class="weekday-header sun">日</div>
+                    <div class="weekday-header">月</div>
+                    <div class="weekday-header">火</div>
+                    <div class="weekday-header">水</div>
+                    <div class="weekday-header">木</div>
+                    <div class="weekday-header">金</div>
+                    <div class="weekday-header">土</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8月カレンダー -->
+        <div class="month-section">
+            <div class="month-title">8月 August</div>
+            <div class="calendar-wrapper">
+                <div class="calendar-grid" id="augGrid">
+                    <!-- 曜日ヘッダー -->
+                    <div class="weekday-header sun">日</div>
+                    <div class="weekday-header">月</div>
+                    <div class="weekday-header">火</div>
+                    <div class="weekday-header">水</div>
+                    <div class="weekday-header">木</div>
+                    <div class="weekday-header">金</div>
+                    <div class="weekday-header">土</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-container">
+        <footer>
+            ※免責事項: 本カレンダーは2026年7月1日時点の調査結果に基づくAIによる自動調査・生成物です。実際の開催情報と異なる場合があるため、お出かけの際は必ず各主催者の最新の公式発表をご確認ください。
+        </footer>
+    </div>
+
+    <!-- モーダル詳細ダイアログ -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <button class="close-btn" id="closeBtn">&times;</button>
+            <div class="modal-date" id="modalDate">7月25日 (土) の盆踊り</div>
+            <div class="modal-events-list" id="modalEventsList">
+                <!-- イベント詳細カードはJSで描画 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const eventData = ##EVENT_DATA_JSON##;
+        const calendarEvents = ##CALENDAR_EVENTS_JSON##;
+
+        function renderCalendar(month, gridId, startWeekday) {
+            const grid = document.getElementById(gridId);
+            const daysInMonth = 31;
+            
+            for (let i = 0; i < startWeekday; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-cell empty';
+                grid.appendChild(emptyCell);
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const weekday = (startWeekday + day - 1) % 7;
+                const cell = document.createElement('div');
+                
+                let cellClass = 'calendar-cell';
+                if (weekday === 0) cellClass += ' sun';
+                if (weekday === 6) cellClass += ' sat';
+                
+                const eventsOnDay = calendarEvents[month]?.[day] || [];
+                if (eventsOnDay.length > 0) {
+                    cellClass += ' has-events';
+                }
+                
+                cell.className = cellClass;
+                
+                const numSpan = document.createElement('span');
+                numSpan.className = 'day-number';
+                numSpan.textContent = day;
+                cell.appendChild(numSpan);
+                
+                if (eventsOnDay.length > 0) {
+                    const countBadge = document.createElement('div');
+                    countBadge.className = 'event-count-badge';
+                    countBadge.textContent = eventsOnDay.length;
+                    cell.appendChild(countBadge);
+                }
+                
+                const eventContainer = document.createElement('div');
+                eventContainer.className = 'cell-events';
+                
+                eventsOnDay.slice(0, 3).forEach(ev => {
+                    const badge = document.createElement('div');
+                    badge.className = 'event-badge';
+                    badge.textContent = `[${ev.ward.replace('大阪市', '')}] ${ev.name}`;
+                    eventContainer.appendChild(badge);
+                });
+                
+                if (eventsOnDay.length > 3) {
+                    const moreBadge = document.createElement('div');
+                    moreBadge.className = 'event-badge';
+                    moreBadge.style.borderLeft = 'none';
+                    moreBadge.style.color = 'var(--text-muted)';
+                    moreBadge.textContent = `他 ${eventsOnDay.length - 3} 件...`;
+                    eventContainer.appendChild(moreBadge);
+                }
+                
+                cell.appendChild(eventContainer);
+                
+                if (eventsOnDay.length > 0) {
+                    cell.addEventListener('click', () => showModal(month, day, eventsOnDay));
+                }
+                
+                grid.appendChild(cell);
+            }
+        }
+
+        renderCalendar(7, 'julyGrid', 2);
+        renderCalendar(8, 'augGrid', 5);
+
+        const overlay = document.getElementById('modalOverlay');
+        const modalDate = document.getElementById('modalDate');
+        const modalEventsList = document.getElementById('modalEventsList');
+        const closeBtn = document.getElementById('closeBtn');
+
+        function showModal(month, day, eventsOnDay) {
+            modalDate.textContent = `${month}月${day}日 の開催盆踊り一覧 (${eventsOnDay.length}件)`;
+            modalEventsList.innerHTML = '';
+            
+            eventsOnDay.forEach(ev => {
+                const card = document.createElement('div');
+                card.className = 'modal-event-card';
+                
+                const notesHtml = ev.notes ? `<div class="detail-row"><strong>特記事項</strong><span>${ev.notes}</span></div>` : '';
+                const performerHtml = ev.performer && ev.performer !== '詳細記載なし' ? `<div class="detail-row"><strong>出演者</strong><span>${ev.performer}</span></div>` : '';
+                
+                card.innerHTML = `
+                    <h3>
+                        <span class="ward-tag">${ev.ward}</span>
+                        ${ev.name}
+                    </h3>
+                    <div class="detail-row">
+                        <strong>開催場所</strong>
+                        <span>${ev.place}</span>
+                    </div>
+                    ${performerHtml}
+                    ${notesHtml}
+                    <div class="detail-row">
+                        <strong>情報ソース</strong>
+                        <span><a href="${ev.source_url}" target="_blank" class="source-link">${ev.source_name} ↗</a></span>
+                    </div>
+                `;
+                modalEventsList.appendChild(card);
+            });
+            
+            overlay.classList.add('active');
+        }
+
+        function closeModal() {
+            overlay.classList.remove('active');
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+
+        const themeBtn = document.getElementById('themeBtn');
+        let currentTheme = 'dark';
+
+        themeBtn.addEventListener('click', () => {
+            if (currentTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeBtn.textContent = 'ダークモードにする';
+                currentTheme = 'light';
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                themeBtn.textContent = 'ライトモードにする';
+                currentTheme = 'dark';
+            }
+        });
+    </script>
+</body>
+</html>
+"""
+
+events_json = json.dumps(events, ensure_ascii=False)
+calendar_events_json = json.dumps(calendar_events, ensure_ascii=False)
+
+html_content = html_template.replace('##EVENT_DATA_JSON##', events_json).replace('##CALENDAR_EVENTS_JSON##', calendar_events_json)
+
+# 出力先を docs/index.html に変更
+output_path = '/Users/yoshikazuhashimoto/tmp/docs/index.html'
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(html_content)
+
+print(f"HTML Calendar generated successfully as primary public file at {output_path}")
