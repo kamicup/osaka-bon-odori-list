@@ -51,16 +51,17 @@ if table_match:
                     'notes': notes
                 })
 
-# 日付ごとのマップ
-calendar_events = {7: {}, 8: {}}
-for ev in events:
-    for m, d in ev['dates']:
-        if m in [7, 8]:
-            if d not in calendar_events[m]:
-                calendar_events[m][d] = []
-            calendar_events[m][d].append(ev)
+# docs フォルダのパス
+docs_dir = '/Users/yoshikazuhashimoto/tmp/docs'
+os.makedirs(docs_dir, exist_ok=True)
 
-# 2. HTMLの生成 (PWAメタタグ & サービスワーカー登録を追加)
+# 2. JSONデータソースの書き出し (分離化)
+events_json_path = os.path.join(docs_dir, 'events.json')
+with open(events_json_path, 'w', encoding='utf-8') as f:
+    json.dump(events, f, ensure_ascii=False, indent=2)
+print(f"Data source JSON generated at {events_json_path}")
+
+# 3. HTMLビューの生成 (fetch('./events.json') による非同期ロードに変更)
 html_template = """<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -784,10 +785,38 @@ html_template = """<!DOCTYPE html>
     </div>
 
     <script>
-        const eventData = ##EVENT_DATA_JSON##;
-        const calendarEvents = ##CALENDAR_EVENTS_JSON##;
+        // 起動時にデータソースJSONを非同期ロード
+        fetch('./events.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(events => {
+                // ロードしたイベントデータから日付マップを動的に作成
+                const calendarEvents = {7: {}, 8: {}};
+                events.forEach(ev => {
+                    ev.dates.forEach(([m, d]) => {
+                        if (m === 7 || m === 8) {
+                            if (!calendarEvents[m][d]) {
+                                calendarEvents[m][d] = [];
+                            }
+                            calendarEvents[m][d].push(ev);
+                        }
+                    });
+                });
+                
+                // カレンダーの描画実行
+                renderCalendar(7, 'julyGrid', 2, calendarEvents);
+                renderCalendar(8, 'augGrid', 5, calendarEvents);
+            })
+            .catch(err => {
+                console.error('Failed to load events data:', err);
+                // エラー時のフォールバック表示などが必要ならここに記述
+            });
 
-        function renderCalendar(month, gridId, startWeekday) {
+        function renderCalendar(month, gridId, startWeekday, calendarEvents) {
             const grid = document.getElementById(gridId);
             const daysInMonth = 31;
             
@@ -852,9 +881,6 @@ html_template = """<!DOCTYPE html>
                 grid.appendChild(cell);
             }
         }
-
-        renderCalendar(7, 'julyGrid', 2);
-        renderCalendar(8, 'augGrid', 5);
 
         const overlay = document.getElementById('modalOverlay');
         const modalDate = document.getElementById('modalDate');
@@ -931,14 +957,10 @@ html_template = """<!DOCTYPE html>
 </html>
 """
 
-events_json = json.dumps(events, ensure_ascii=False)
-calendar_events_json = json.dumps(calendar_events, ensure_ascii=False)
+# HTMLファイルの書き出し
+html_output_path = os.path.join(docs_dir, 'index.html')
+with open(html_output_path, 'w', encoding='utf-8') as f:
+    f.write(html_template)
+print(f"HTML View generated at {html_output_path}")
 
-html_content = html_template.replace('##EVENT_DATA_JSON##', events_json).replace('##CALENDAR_EVENTS_JSON##', calendar_events_json)
-
-# 出力先
-output_path = '/Users/yoshikazuhashimoto/tmp/docs/index.html'
-with open(output_path, 'w', encoding='utf-8') as f:
-    f.write(html_content)
-
-print(f"HTML Calendar generated successfully with PWA features at {output_path}")
+print("Separation of HTML View and JSON Data Source completed successfully.")

@@ -1,8 +1,9 @@
-const CACHE_NAME = 'bonodori-cache-v2';
+const CACHE_NAME = 'bonodori-cache-v3';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
+  './events.json',
   './icon-192.png',
   './icon-512.png'
 ];
@@ -33,7 +34,6 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // キャッシュがあればキャッシュを返し、なければネットワークからフェッチ
         return response || fetch(event.request);
       })
   );

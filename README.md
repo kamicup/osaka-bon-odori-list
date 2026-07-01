@@ -16,6 +16,7 @@
 *   **HTML版インタラクティブカレンダー (GitHub Pages公開・PC/スマホ両対応)**:
     *   **一般公開用URL (Webで直接開く)**: [https://kamicup.github.io/osaka-bon-odori-list/](https://kamicup.github.io/osaka-bon-odori-list/)
     *   **ローカルファイル**: [docs/index.html](file:///Users/yoshikazuhashimoto/tmp/docs/index.html)
+    *   **データソースJSON**: [docs/events.json](file:///Users/yoshikazuhashimoto/tmp/docs/events.json) (※HTMLビューと完全に分離されたデータソース。このファイルをメンテすることで将来的にシステム化可能です)
     *   **GitHub Pages公開**: 本ファイルは GitHub Pages にホスティングされ、上記URLで全世界に公開されています。
     *   **PWA（アプリ化）対応**: スマホで開いた際、ブラウザの「ホーム画面に追加」（iOS Safari）や「アプリをインストール」（Android Chrome）を押すことで、スマホ上に独立したアプリとして登録できます。登録後は、ブラウザのツールバー等が隠れたネイティブアプリ同様の「全画面表示（スタンドアロン）」で快適に起動します。
     *   **インタラクティブ仕様**: カレンダーの日付マスをクリックすると、その日に開催されるすべての盆踊りの詳細（お祭り名称、会場場所、特記事項、情報ソースURLへの直接リンク）がポップアップモーダルで綺麗に表示されます。
@@ -36,7 +37,12 @@
 ```text
 ├── README.md               # 本ファイル（プロジェクト説明書）
 ├── docs/                   # GitHub Pages公開用フォルダ
-│   └── index.html          # ★HTML版インタラクティブカレンダー（旧カレンダーHTMLから移行）
+│   ├── index.html          # ★HTMLビュー（events.json を非同期ロードして動的にカレンダーを描画）
+│   ├── events.json         # ★カレンダーの純粋なデータソース（JSON形式）
+│   ├── manifest.json       # PWAウェブアプリ設定マニフェスト
+│   ├── sw.js               # PWA用サービスワーカー（events.json を含む静的キャッシュ制御）
+│   ├── icon-192.png        # PWAアプリアイコン (192px)
+│   └── icon-512.png        # PWAアプリアイコン (512px)
 ├── 2026/                   # 2026年度（令和8年）調査成果物
 │   ├── bonodori_report_2026.md    # 調査レポート（開催日時、場所、出演者等の詳細一覧）
 │   ├── reproduction_prompt.md     # 調査およびレポート生成を最初から完全再現するAI用プロンプト
