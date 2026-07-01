@@ -23,13 +23,6 @@
     *   **テーマ切り替え**: 画面右上から「ライトモード（白基調）」と「ダークモード（お祭り夜空風の深紺）」をワンクリックで切り替え可能です。
     *   **スマホ表示最適化**: スマホでは横スクロールを発生させず、画面幅にすっぽりとカレンダーがスケールダウンして収まります。予定がある日はバッジで件数が示され、タップして詳細が開きます。
 
-*   **カレンダー画像 (PNGポスター)**:
-    縦長高解像度のポスター形式で、すべてのイベントが日付のマスの中に直接テキストでプロットされています（重複日も文字が省略されず完全表示されます）。
-    *   **7月通常版 (ダークテーマ)**: [大阪市盆踊りカレンダー2026_07.png](file:///Users/yoshikazuhashimoto/tmp/2026/大阪市盆踊りカレンダー2026_07.png)
-    *   **7月印刷用 (背景純白)**: [大阪市盆踊りカレンダー2026_07_print.png](file:///Users/yoshikazuhashimoto/tmp/2026/大阪市盆踊りカレンダー2026_07_print.png)
-    *   **8月通常版 (ダークテーマ)**: [大阪市盆踊りカレンダー2026_08.png](file:///Users/yoshikazuhashimoto/tmp/2026/大阪市盆踊りカレンダー2026_08.png)
-    *   **8月印刷用 (背景純白)**: [大阪市盆踊りカレンダー2026_08_print.png](file:///Users/yoshikazuhashimoto/tmp/2026/大阪市盆踊りカレンダー2026_08_print.png)
-
 ---
 
 ## 2. ディレクトリ構成
@@ -46,12 +39,8 @@
 ├── 2026/                   # 2026年度（令和8年）調査成果物
 │   ├── bonodori_report_2026.md    # 調査レポート（開催日時、場所、出演者等の詳細一覧）
 │   ├── reproduction_prompt.md     # 調査およびレポート生成を最初から完全再現するAI用プロンプト
-│   ├── generate_calendar_ultra.py  # 高解像度PNGカレンダー画像を自動生成するPythonスクリプト
-│   ├── generate_calendar_html.py   # インタラクティブHTMLカレンダーを自動生成するPythonスクリプト
-│   ├── 大阪市盆踊りカレンダー2026_07.png       # 7月カレンダー（通常版）
-│   ├── 大阪市盆踊りカレンダー2026_07_print.png # 7月カレンダー（印刷用・背景白）
-│   ├── 大阪市盆踊りカレンダー2026_08.png       # 8月カレンダー（通常版）
-│   └── 大阪市盆踊りカレンダー2026_08_print.png # 8月カレンダー（印刷用・背景白）
+│   ├── build.py                    # HTMLカレンダーとJSONデータを一括生成するPythonスクリプト
+│   └── generate_calendar_html.py   # インタラクティブHTMLカレンダーを自動生成するPythonスクリプト
 └── downloads/              # 一時ダウンロードデータの格納先（Git追跡対象外）
     └── .gitignore          # 内部ファイルをGit無視する設定
 ```
@@ -63,16 +52,13 @@
 ### AIアシスタントによる調査の再現
 本プロジェクトに格納されている [2026/reproduction_prompt.md](file:///Users/yoshikazuhashimoto/tmp/2026/reproduction_prompt.md) のプロンプトテキストをAIアシスタントにインプットすることで、同様の調査・パース要件に基づく成果物の作成をゼロから再現して実行させることができます。
 
-### カレンダー画像＆HTMLの更新・再生成
-カレンダー画像をデータソース（`bonodori_report_2026.md`）の更新に合わせて再生成したい場合は、仮想環境のPythonを使って以下のスクリプトを実行してください。
+### HTMLカレンダーの更新・再生成
+HTMLカレンダーをデータソース（`bonodori_report_2026.md`）の更新に合わせて再生成したい場合は、仮想環境のPythonを使って以下のスクリプトを実行してください。
 
 ```bash
 # 2026/ フォルダへ移動
 cd 2026/
 
-# PNG画像を更新
-../.venv/bin/python generate_calendar_ultra.py
-
-# HTMLカレンダー（docs/index.html）を更新
+# HTMLカレンダー（docs/index.html）とJSONデータ（docs/events.json）を更新
 ../.venv/bin/python generate_calendar_html.py
 ```
