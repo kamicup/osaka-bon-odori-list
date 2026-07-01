@@ -79,3 +79,19 @@ wrangler deploy
 ```
 
 詳細は [workers/submissions/README.md](workers/submissions/README.md) を参照してください。
+
+### 次シーズン公開前のGitHubトークン更新
+匿名投稿フォームで使う `GITHUB_TOKEN` は90日期限で発行しています。次シーズンの公開前には、新しいFine-grained personal access tokenを発行し、Cloudflare Workerのsecretを再設定してください。
+
+1. GitHubの `Settings` → `Developer settings` → `Personal access tokens` → `Fine-grained tokens` で新規トークンを作成します。
+2. 対象リポジトリは `kamicup/osaka-bon-odori-list` のみに限定します。
+3. Repository permissions は `Issues: Read and write` を付与します。
+4. 生成されたトークンを以下でWorker secretに再設定します。
+
+```bash
+cd workers/submissions
+wrangler secret put GITHUB_TOKEN
+wrangler deploy
+```
+
+期限切れのままだと投稿フォームからGitHub Issueを作成できません。

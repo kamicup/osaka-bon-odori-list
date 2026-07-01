@@ -19,6 +19,23 @@ wrangler secret put TURNSTILE_SECRET_KEY
 
 Set `ALLOWED_ORIGIN`, `GITHUB_OWNER`, `GITHUB_REPO`, and `ISSUE_LABELS` in `wrangler.jsonc`.
 
+## Renew GitHub Token
+
+`GITHUB_TOKEN` is issued with a 90-day expiration. Before publishing the next festival season, create a new fine-grained personal access token and update the Worker secret.
+
+1. Open GitHub `Settings` -> `Developer settings` -> `Personal access tokens` -> `Fine-grained tokens`.
+2. Generate a new token for `kamicup/osaka-bon-odori-list` only.
+3. Grant repository permission `Issues: Read and write`.
+4. Update the Worker secret and deploy:
+
+```bash
+cd workers/submissions
+wrangler secret put GITHUB_TOKEN
+wrangler deploy
+```
+
+If this token expires, the public form remains visible but issue creation fails.
+
 ## Deploy
 
 ```bash
