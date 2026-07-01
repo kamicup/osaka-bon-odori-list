@@ -59,14 +59,11 @@
 本プロジェクトに格納されている [2026/reproduction_prompt.md](file:///Users/yoshikazuhashimoto/tmp/2026/reproduction_prompt.md) のプロンプトテキストをAIアシスタントにインプットすることで、同様の調査・パース要件に基づく成果物の作成をゼロから再現して実行させることができます。
 
 ### HTMLカレンダーの更新・再生成
-HTMLカレンダーをデータソース（`bonodori_report_2026.md`）の更新に合わせて再生成したい場合は、仮想環境のPythonを使って以下のスクリプトを実行してください。
+HTMLカレンダーをデータソース（`bonodori_report_2026.md`）の更新に合わせて再生成したい場合は、`uv` を使って以下のスクリプトを実行してください。
 
 ```bash
-# 2026/ フォルダへ移動
-cd 2026/
-
 # HTMLカレンダー（docs/index.html）とJSONデータ（docs/events.json）を更新
-../.venv/bin/python generate_calendar_html.py
+uv run python 2026/generate_calendar_html.py
 ```
 
 ### 匿名情報提供フォームの設定

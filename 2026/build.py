@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 
-def run_script(script_name, python_bin):
+def run_script(script_name):
     script_path = os.path.join(os.path.dirname(__file__), script_name)
     if not os.path.exists(script_path):
         print(f"Error: {script_name} not found at {script_path}")
@@ -10,7 +10,7 @@ def run_script(script_name, python_bin):
     
     print(f"Running {script_name}...")
     try:
-        result = subprocess.run([python_bin, script_path], capture_output=True, text=True, check=True)
+        result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True)
         print(result.stdout)
         return True
     except subprocess.CalledProcessError as e:
@@ -19,23 +19,14 @@ def run_script(script_name, python_bin):
         return False
 
 def main():
-    # プロジェクトルートからの仮想環境Pythonパスを探索
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    venv_python = os.path.join(project_root, '.venv', 'bin', 'python')
-    
-    # 仮想環境がなければシステムのpythonを使用
-    if not os.path.exists(venv_python):
-        venv_python = sys.executable
-        print(f"Warning: Virtual environment python not found at {venv_python}. Using system python: {venv_python}")
-    else:
-        print(f"Using virtual environment Python: {venv_python}")
+    print(f"Using Python: {sys.executable}")
 
     print("==================================================")
     print("大阪市盆踊りプロジェクト 一括ビルドシステム")
     print("==================================================")
     
     # HTMLカレンダー & JSONデータソースの生成
-    if not run_script("generate_calendar_html.py", venv_python):
+    if not run_script("generate_calendar_html.py"):
         print("Build failed at HTML/JSON generation step.")
         sys.exit(1)
         

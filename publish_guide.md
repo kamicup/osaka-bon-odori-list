@@ -40,7 +40,7 @@
 
 ```bash
 # HTMLの再生成 (自動で docs/index.html が上書き更新されます)
-./.venv/bin/python 2026/generate_calendar_html.py
+uv run python 2026/generate_calendar_html.py
 
 # 変更をコミットしてプッシュ
 git add docs/index.html

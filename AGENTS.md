@@ -6,16 +6,16 @@ This repository maintains the Osaka Bon-Odori festival schedule and public calen
 
 ## Build, Test, and Development Commands
 
-Use the repo-local virtual environment when available:
+Use `uv` for Python commands in this project:
 
 ```bash
-./.venv/bin/python 2026/build.py
+uv run python 2026/build.py
 ```
 
 Runs the full build, regenerating `docs/index.html` and `docs/events.json`.
 
 ```bash
-./.venv/bin/python 2026/generate_calendar_html.py
+uv run python 2026/generate_calendar_html.py
 ```
 
 Regenerates the interactive GitHub Pages calendar and JSON data after report edits.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Bon-Odori Submission"
+  short_description: "匿名投稿Issueを確認し予定表へ反映する"
+  default_prompt: "Use $review-bonodori-submission to review anonymous Bon-Odori GitHub issue submissions and apply valid updates."
