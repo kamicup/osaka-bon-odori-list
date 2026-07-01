@@ -22,6 +22,7 @@
     *   **インタラクティブ仕様**: カレンダーの日付マスをクリックすると、その日に開催されるすべての盆踊りの詳細（お祭り名称、会場場所、特記事項、情報ソースURLへの直接リンク）がポップアップモーダルで綺麗に表示されます。
     *   **テーマ切り替え**: 画面右上から「ライトモード（白基調）」と「ダークモード（お祭り夜空風の深紺）」をワンクリックで切り替え可能です。
     *   **スマホ表示最適化**: スマホでは横スクロールを発生させず、画面幅にすっぽりとカレンダーがスケールダウンして収まります。予定がある日はバッジで件数が示され、タップして詳細が開きます。
+    *   **匿名情報提供フォーム**: 一般ユーザーがログインなしで盆踊り情報を投稿できます。投稿内容はCloudflare Worker経由でGitHub Issueとして作成され、管理者が公式情報を確認してから取り込みます。
 
 ---
 
@@ -32,6 +33,7 @@
 ├── docs/                   # GitHub Pages公開用フォルダ
 │   ├── index.html          # ★HTMLビュー（events.json を非同期ロードして動的にカレンダーを描画）
 │   ├── events.json         # ★カレンダーの純粋なデータソース（JSON形式）
+│   ├── submission-config.js # 匿名投稿フォームのAPI URL設定
 │   ├── manifest.json       # PWAウェブアプリ設定マニフェスト
 │   ├── sw.js               # PWA用サービスワーカー（events.json を含む静的キャッシュ制御）
 │   ├── icon-192.png        # PWAアプリアイコン (192px)
@@ -41,6 +43,10 @@
 │   ├── reproduction_prompt.md     # 調査およびレポート生成を最初から完全再現するAI用プロンプト
 │   ├── build.py                    # HTMLカレンダーとJSONデータを一括生成するPythonスクリプト
 │   └── generate_calendar_html.py   # インタラクティブHTMLカレンダーを自動生成するPythonスクリプト
+├── workers/submissions/    # 匿名投稿をGitHub Issueへ変換するCloudflare Worker
+│   ├── wrangler.jsonc      # Worker設定
+│   ├── src/index.js        # 投稿API実装
+│   └── README.md           # デプロイとシークレット設定手順
 └── downloads/              # 一時ダウンロードデータの格納先（Git追跡対象外）
     └── .gitignore          # 内部ファイルをGit無視する設定
 ```
@@ -62,3 +68,14 @@ cd 2026/
 # HTMLカレンダー（docs/index.html）とJSONデータ（docs/events.json）を更新
 ../.venv/bin/python generate_calendar_html.py
 ```
+
+### 匿名情報提供フォームの設定
+投稿フォームを有効にするには、Cloudflare Workerをデプロイし、発行された `/submit` エンドポイントを `docs/submission-config.js` に設定します。
+
+```bash
+cd workers/submissions
+wrangler secret put GITHUB_TOKEN
+wrangler deploy
+```
+
+詳細は [workers/submissions/README.md](workers/submissions/README.md) を参照してください。

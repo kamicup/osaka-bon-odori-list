@@ -494,6 +494,117 @@
             text-decoration: underline;
         }
 
+        .submission-form {
+            display: grid;
+            gap: 14px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-field label {
+            color: var(--text-muted);
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        .form-field input,
+        .form-field textarea,
+        .form-field select {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font: inherit;
+            padding: 10px 12px;
+            min-height: 42px;
+        }
+
+        .form-field textarea {
+            min-height: 96px;
+            resize: vertical;
+        }
+
+        .form-field input:focus,
+        .form-field textarea:focus,
+        .form-field select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.12);
+        }
+
+        .form-help {
+            color: var(--text-muted);
+            font-size: 0.86rem;
+            line-height: 1.6;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .submit-btn {
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: #1c1c1e;
+            cursor: pointer;
+            font-weight: 800;
+            padding: 10px 18px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+        }
+
+        .form-status {
+            min-height: 22px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .form-status.success {
+            color: var(--primary-color);
+        }
+
+        .form-status.error {
+            color: var(--accent-red);
+        }
+
+        .visually-hidden-field {
+            position: absolute;
+            left: -10000px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+
         .install-intro {
             color: var(--text-color);
             line-height: 1.7;
@@ -683,6 +794,16 @@
             .detail-row strong {
                 width: 70px;
             }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .submit-btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -703,6 +824,7 @@
     <header>
         <div class="header-inner">
             <div class="header-actions">
+                <button class="header-action-btn" id="submissionBtn" type="button">情報を投稿</button>
                 <button class="header-action-btn install-btn" id="installBtn" type="button">アプリに追加</button>
                 <button class="header-action-btn theme-switch" id="themeBtn" type="button">ライトモードにする</button>
             </div>
@@ -775,6 +897,70 @@
         </div>
     </div>
 
+    <!-- 盆踊り情報投稿フォーム -->
+    <div class="modal-overlay" id="submissionOverlay">
+        <div class="modal-content">
+            <button class="close-btn" id="submissionCloseBtn">&times;</button>
+            <div class="modal-date">盆踊り情報を投稿</div>
+            <form class="submission-form" id="submissionForm">
+                <p class="form-help">投稿内容はGitHub Issueとしてレビュー依頼になります。掲載前に公式情報を確認します。</p>
+                <div class="form-grid">
+                    <div class="form-field full">
+                        <label for="eventName">イベント名 必須</label>
+                        <input id="eventName" name="eventName" required maxlength="120" autocomplete="off">
+                    </div>
+                    <div class="form-field">
+                        <label for="eventDate">開催日 必須</label>
+                        <input id="eventDate" name="eventDate" required maxlength="80" placeholder="例: 2026年8月27日〜28日">
+                    </div>
+                    <div class="form-field">
+                        <label for="eventTime">開催時間</label>
+                        <input id="eventTime" name="eventTime" maxlength="80" placeholder="例: 18:30〜21:00">
+                    </div>
+                    <div class="form-field">
+                        <label for="venue">会場 必須</label>
+                        <input id="venue" name="venue" required maxlength="140" autocomplete="off">
+                    </div>
+                    <div class="form-field">
+                        <label for="ward">区 必須</label>
+                        <select id="ward" name="ward" required>
+                            <option value="">選択してください</option>
+                            <option>北区</option><option>都島区</option><option>福島区</option><option>此花区</option>
+                            <option>中央区</option><option>西区</option><option>港区</option><option>大正区</option>
+                            <option>天王寺区</option><option>浪速区</option><option>西淀川区</option><option>淀川区</option>
+                            <option>東淀川区</option><option>東成区</option><option>生野区</option><option>旭区</option>
+                            <option>城東区</option><option>鶴見区</option><option>阿倍野区</option><option>住之江区</option>
+                            <option>住吉区</option><option>東住吉区</option><option>平野区</option><option>西成区</option>
+                            <option>大阪市外</option>
+                        </select>
+                    </div>
+                    <div class="form-field full">
+                        <label for="address">住所</label>
+                        <input id="address" name="address" maxlength="180" autocomplete="street-address">
+                    </div>
+                    <div class="form-field full">
+                        <label for="sourceUrl">公式情報URL 必須</label>
+                        <input id="sourceUrl" name="sourceUrl" type="url" required maxlength="500" placeholder="自治体、主催者、会場、出演者などの公式ページ">
+                    </div>
+                    <div class="form-field full">
+                        <label for="notes">補足</label>
+                        <textarea id="notes" name="notes" maxlength="1000" placeholder="雨天時対応、出演者、注意事項など"></textarea>
+                    </div>
+                    <div class="visually-hidden-field">
+                        <label for="website">空欄のまま送信してください</label>
+                        <input id="website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+                </div>
+                <div id="turnstileContainer"></div>
+                <div class="form-status" id="submissionStatus"></div>
+                <div class="form-actions">
+                    <button class="submit-btn" id="submissionSubmitBtn" type="submit">レビュー依頼を送信</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="./submission-config.js"></script>
     <script>
         // 起動時にデータソースJSONを非同期ロード
         fetch('./events.json')
@@ -1020,6 +1206,134 @@
                 showInstallButton();
             }
         }
+
+        const submissionBtn = document.getElementById('submissionBtn');
+        const submissionOverlay = document.getElementById('submissionOverlay');
+        const submissionCloseBtn = document.getElementById('submissionCloseBtn');
+        const submissionForm = document.getElementById('submissionForm');
+        const submissionStatus = document.getElementById('submissionStatus');
+        const submissionSubmitBtn = document.getElementById('submissionSubmitBtn');
+        const turnstileContainer = document.getElementById('turnstileContainer');
+        let turnstileWidgetId = null;
+
+        function getSubmissionEndpoint() {
+            return (window.BONODORI_SUBMISSION_API_URL || '').trim();
+        }
+
+        function loadTurnstileScriptIfNeeded() {
+            const siteKey = (window.BONODORI_TURNSTILE_SITE_KEY || '').trim();
+            if (!siteKey || window.turnstile || document.getElementById('turnstileScript')) {
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.id = 'turnstileScript';
+            script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+            script.async = true;
+            script.defer = true;
+            script.onload = () => maybeRenderTurnstile();
+            document.head.appendChild(script);
+        }
+
+        function showSubmissionModal() {
+            submissionStatus.className = 'form-status';
+            submissionStatus.textContent = '';
+            submissionOverlay.classList.add('active');
+            loadTurnstileScriptIfNeeded();
+            maybeRenderTurnstile();
+        }
+
+        function closeSubmissionModal() {
+            submissionOverlay.classList.remove('active');
+        }
+
+        function setSubmissionStatus(message, type = '') {
+            submissionStatus.className = `form-status ${type}`.trim();
+            submissionStatus.textContent = message;
+        }
+
+        function maybeRenderTurnstile() {
+            const siteKey = (window.BONODORI_TURNSTILE_SITE_KEY || '').trim();
+            if (!siteKey || !window.turnstile || turnstileWidgetId !== null) {
+                return;
+            }
+
+            turnstileWidgetId = window.turnstile.render(turnstileContainer, {
+                sitekey: siteKey
+            });
+        }
+
+        function getTurnstileToken() {
+            if (!window.turnstile || turnstileWidgetId === null) {
+                return '';
+            }
+
+            return window.turnstile.getResponse(turnstileWidgetId);
+        }
+
+        function resetTurnstile() {
+            if (window.turnstile && turnstileWidgetId !== null) {
+                window.turnstile.reset(turnstileWidgetId);
+            }
+        }
+
+        function collectSubmissionPayload() {
+            const formData = new FormData(submissionForm);
+            return {
+                eventName: formData.get('eventName') || '',
+                eventDate: formData.get('eventDate') || '',
+                eventTime: formData.get('eventTime') || '',
+                venue: formData.get('venue') || '',
+                ward: formData.get('ward') || '',
+                address: formData.get('address') || '',
+                sourceUrl: formData.get('sourceUrl') || '',
+                notes: formData.get('notes') || '',
+                website: formData.get('website') || '',
+                turnstileToken: getTurnstileToken()
+            };
+        }
+
+        submissionBtn.addEventListener('click', showSubmissionModal);
+        submissionCloseBtn.addEventListener('click', closeSubmissionModal);
+        submissionOverlay.addEventListener('click', (e) => {
+            if (e.target === submissionOverlay) closeSubmissionModal();
+        });
+
+        submissionForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const endpoint = getSubmissionEndpoint();
+            if (!endpoint) {
+                setSubmissionStatus('投稿APIが未設定です。管理者が docs/submission-config.js にWorker URLを設定する必要があります。', 'error');
+                return;
+            }
+
+            submissionSubmitBtn.disabled = true;
+            setSubmissionStatus('送信しています...');
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(collectSubmissionPayload())
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || '送信に失敗しました');
+                }
+
+                submissionForm.reset();
+                resetTurnstile();
+                setSubmissionStatus('送信しました。GitHub Issueとしてレビュー依頼が作成されました。', 'success');
+            } catch (error) {
+                resetTurnstile();
+                setSubmissionStatus(`送信できませんでした: ${error.message}`, 'error');
+            } finally {
+                submissionSubmitBtn.disabled = false;
+            }
+        });
 
         const themeBtn = document.getElementById('themeBtn');
         let currentTheme = 'dark';

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository maintains the Osaka Bon-Odori festival schedule and public calendar. The main research source is `2026/bonodori_report_2026.md`. Python generator scripts live in `2026/`, including `build.py` and `generate_calendar_html.py` for the web calendar data/view. Public GitHub Pages output lives in `docs/`: `index.html`, `events.json`, `manifest.json`, `sw.js`, and PWA icons. Keep temporary source downloads in `downloads/`; its contents are ignored.
+This repository maintains the Osaka Bon-Odori festival schedule and public calendar. The main research source is `2026/bonodori_report_2026.md`. Python generator scripts live in `2026/`, including `build.py` and `generate_calendar_html.py` for the web calendar data/view. Public GitHub Pages output lives in `docs/`: `index.html`, `events.json`, `submission-config.js`, `manifest.json`, `sw.js`, and PWA icons. Anonymous submission handling lives in `workers/submissions/`. Keep temporary source downloads in `downloads/`; its contents are ignored.
 
 ## Build, Test, and Development Commands
 
@@ -19,6 +19,12 @@ Runs the full build, regenerating `docs/index.html` and `docs/events.json`.
 ```
 
 Regenerates the interactive GitHub Pages calendar and JSON data after report edits.
+
+```bash
+cd workers/submissions && wrangler deploy
+```
+
+Deploys the Cloudflare Worker that converts public form submissions into GitHub issues. Configure secrets first as described in `workers/submissions/README.md`.
 
 ## Coding Style & Naming Conventions
 

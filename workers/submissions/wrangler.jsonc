@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "osaka-bon-odori-submissions",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "GITHUB_OWNER": "kamicup",
+    "GITHUB_REPO": "osaka-bon-odori-list",
+    "ALLOWED_ORIGIN": "https://kamicup.github.io",
+    "ISSUE_LABELS": "submission,needs-review"
+  }
+}
