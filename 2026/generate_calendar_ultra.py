@@ -3,9 +3,9 @@ import re
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 # 1. データの読み込みとパース
-report_path = '/Users/yoshikazuhashimoto/tmp/bonodori_report_2026.md'
+report_path = '/Users/yoshikazuhashimoto/tmp/2026/bonodori_report_2026.md'
 if not os.path.exists(report_path):
-    report_path = '/Users/yoshikazuhashimoto/.gemini/antigravity-cli/brain/29c87b03-b41e-4f3a-9939-e5f07924f889/bonodori_report_2026.md'
+    report_path = '/Users/yoshikazuhashimoto/.gemini/antigravity-cli/brain/29c87b03-b41e-4f3a-9939-e5f07924f889/2026/bonodori_report_2026.md'
 
 with open(report_path, 'r', encoding='utf-8') as f:
     content = f.read()
@@ -207,11 +207,11 @@ def generate_ultra_calendar(month, title_text, output_filename, print_mode=False
 
 # 3. 実行
 # 7月
-generate_ultra_calendar(7, "7月 July 2026", '/Users/yoshikazuhashimoto/tmp/大阪市盆踊りカレンダー2026_07.png', print_mode=False)
-generate_ultra_calendar(7, "7月 July 2026 (印刷用)", '/Users/yoshikazuhashimoto/tmp/大阪市盆踊りカレンダー2026_07_print.png', print_mode=True)
+generate_ultra_calendar(7, "7月 July 2026", '/Users/yoshikazuhashimoto/tmp/2026/大阪市盆踊りカレンダー2026_07.png', print_mode=False)
+generate_ultra_calendar(7, "7月 July 2026 (印刷用)", '/Users/yoshikazuhashimoto/tmp/2026/大阪市盆踊りカレンダー2026_07_print.png', print_mode=True)
 
 # 8月
-generate_ultra_calendar(8, "8月 August 2026", '/Users/yoshikazuhashimoto/tmp/大阪市盆踊りカレンダー2026_08.png', print_mode=False)
-generate_ultra_calendar(8, "8月 August 2026 (印刷用)", '/Users/yoshikazuhashimoto/tmp/大阪市盆踊りカレンダー2026_08_print.png', print_mode=True)
+generate_ultra_calendar(8, "8月 August 2026", '/Users/yoshikazuhashimoto/tmp/2026/大阪市盆踊りカレンダー2026_08.png', print_mode=False)
+generate_ultra_calendar(8, "8月 August 2026 (印刷用)", '/Users/yoshikazuhashimoto/tmp/2026/大阪市盆踊りカレンダー2026_08_print.png', print_mode=True)
 
 print("Finished all versions.")
