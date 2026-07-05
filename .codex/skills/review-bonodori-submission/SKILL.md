@@ -46,8 +46,9 @@ Use `uv run python 2026/generate_calendar_html.py` only when the user specifical
    - `docs/events.json` parses as JSON.
    - The new or changed event appears with the expected date, venue, ward, source URL, and modal details.
    - `git diff -- 2026/bonodori_report_2026.md docs/events.json docs/index.html` contains only expected changes.
-10. For any accepted submission or issue-driven code/data fix, commit the changes, push a branch, create a PR, and merge the PR before closing the issue. Include the PR link in the issue comment. If the user explicitly asks not to merge, leave the issue open and explain the pending PR.
-11. Comment on the issue with the action taken, evidence checked, generated command run, and PR link. Close the issue only after the PR has been merged, or when the submission was clearly invalid/test data and required no repository change. Leave it open with `needs-review` when human confirmation is still required.
+10. If the change affects the final public display or cached data (`docs/index.html`, `docs/events.json`, icons, manifest, or other user-visible assets), bump `CACHE_NAME` in `docs/sw.js` (for example `bonodori-cache-v5` to `bonodori-cache-v6`) so deployed users receive the update.
+11. For any accepted submission or issue-driven code/data fix, commit the changes, push a branch, create a PR, and merge the PR before closing the issue. Include the PR link in the issue comment. If the user explicitly asks not to merge, leave the issue open and explain the pending PR.
+12. Comment on the issue with the action taken, evidence checked, generated command run, cache-version change if applicable, and PR link. Close the issue only after the PR has been merged, or when the submission was clearly invalid/test data and required no repository change. Leave it open with `needs-review` when human confirmation is still required.
 
 ## Issue Response Policy
 
@@ -79,6 +80,7 @@ For insufficient sources:
 - Do not infer dates from compact strings such as `20260701` without confirming the intended date and display format from the source.
 - Do not treat generic venue top pages as evidence unless the event is visible there.
 - Do not edit generated files by hand. Edit the report, then run the generator.
+- Do not forget the PWA cache: when final display output changes, include the `docs/sw.js` cache-version bump in the same PR.
 - Do not close non-test issues if verification failed for temporary network or source availability reasons; comment with the blocker instead.
 - Preserve unrelated local changes. Check `git status --short` before editing and inspect relevant diffs before finalizing.
 
