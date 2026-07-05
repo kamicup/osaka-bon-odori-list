@@ -46,7 +46,8 @@ Use `uv run python 2026/generate_calendar_html.py` only when the user specifical
    - `docs/events.json` parses as JSON.
    - The new or changed event appears with the expected date, venue, ward, source URL, and modal details.
    - `git diff -- 2026/bonodori_report_2026.md docs/events.json docs/index.html` contains only expected changes.
-10. Comment on the issue with the action taken, evidence checked, and generated command run. Close the issue only when the submission was fully handled or clearly invalid/test data. Leave it open with `needs-review` when human confirmation is still required.
+10. For any accepted submission or issue-driven code/data fix, commit the changes, push a branch, create a PR, and merge the PR before closing the issue. Include the PR link in the issue comment. If the user explicitly asks not to merge, leave the issue open and explain the pending PR.
+11. Comment on the issue with the action taken, evidence checked, generated command run, and PR link. Close the issue only after the PR has been merged, or when the submission was clearly invalid/test data and required no repository change. Leave it open with `needs-review` when human confirmation is still required.
 
 ## Issue Response Policy
 
@@ -88,6 +89,8 @@ gh issue list --label submission --state open --limit 20 --json number,title,lab
 gh issue view <number> --json number,title,labels,url,createdAt,body,comments
 gh issue comment <number> --body "<Japanese review comment>"
 gh issue close <number> --reason completed
+gh pr create --base main --head <branch> --title "<title>" --body "<body>"
+gh pr merge <number-or-url> --merge --delete-branch
 uv run python 2026/build.py
 uv run python -m json.tool docs/events.json >/tmp/events.json.validated
 git diff -- 2026/bonodori_report_2026.md docs/events.json docs/index.html
