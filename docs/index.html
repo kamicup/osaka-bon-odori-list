@@ -1004,17 +1004,18 @@
                 });
                 
                 // カレンダーの描画実行
-                renderCalendar(7, 'julyGrid', 2, calendarEvents);
-                renderCalendar(8, 'augGrid', 5, calendarEvents);
+                renderCalendar(7, 'julyGrid', calendarEvents);
+                renderCalendar(8, 'augGrid', calendarEvents);
             })
             .catch(err => {
                 console.error('Failed to load events data:', err);
                 // エラー時のフォールバック表示などが必要ならここに記述
             });
 
-        function renderCalendar(month, gridId, startWeekday, calendarEvents) {
+        function renderCalendar(month, gridId, calendarEvents) {
             const grid = document.getElementById(gridId);
             const daysInMonth = 31;
+            const startWeekday = new Date(2026, month - 1, 1).getDay();
             
             for (let i = 0; i < startWeekday; i++) {
                 const emptyCell = document.createElement('div');

@@ -3,9 +3,8 @@ import re
 import json
 
 # 1. データの読み込みとパース
-report_path = '/Users/yoshikazuhashimoto/tmp/2026/bonodori_report_2026.md'
-if not os.path.exists(report_path):
-    report_path = '/Users/yoshikazuhashimoto/.gemini/antigravity-cli/brain/29c87b03-b41e-4f3a-9939-e5f07924f889/2026/bonodori_report_2026.md'
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+report_path = os.path.join(base_dir, '2026', 'bonodori_report_2026.md')
 
 with open(report_path, 'r', encoding='utf-8') as f:
     content = f.read()
@@ -24,8 +23,10 @@ if table_match:
     table_text = table_match.group(1)
     lines = table_text.strip().split('\n')
     for line in lines:
-        if line.startswith('|') and not line.startswith('| ---') and not line.startswith('| 開催年月日'):
+        if line.startswith('|') and not line.startswith('| 開催年月日'):
             parts = [p.strip() for p in line.split('|')[1:-1]]
+            if parts and all(re.fullmatch(r':?-+:?', part) for part in parts):
+                continue
             if len(parts) >= 8:
                 date_str = parts[0]
                 name = parts[1]
@@ -52,7 +53,7 @@ if table_match:
                 })
 
 # docs フォルダのパス
-docs_dir = '/Users/yoshikazuhashimoto/tmp/docs'
+docs_dir = os.path.join(base_dir, 'docs')
 os.makedirs(docs_dir, exist_ok=True)
 
 # 2. JSONデータソースの書き出し (分離化)
@@ -1068,17 +1069,18 @@ html_template = """<!DOCTYPE html>
                 });
                 
                 // カレンダーの描画実行
-                renderCalendar(7, 'julyGrid', 2, calendarEvents);
-                renderCalendar(8, 'augGrid', 5, calendarEvents);
+                renderCalendar(7, 'julyGrid', calendarEvents);
+                renderCalendar(8, 'augGrid', calendarEvents);
             })
             .catch(err => {
                 console.error('Failed to load events data:', err);
                 // エラー時のフォールバック表示などが必要ならここに記述
             });
 
-        function renderCalendar(month, gridId, startWeekday, calendarEvents) {
+        function renderCalendar(month, gridId, calendarEvents) {
             const grid = document.getElementById(gridId);
             const daysInMonth = 31;
+            const startWeekday = new Date(2026, month - 1, 1).getDay();
             
             for (let i = 0; i < startWeekday; i++) {
                 const emptyCell = document.createElement('div');
