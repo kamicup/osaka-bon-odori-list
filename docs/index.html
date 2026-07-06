@@ -337,6 +337,11 @@
             background-color: rgba(255,215,0,0.1);
         }
 
+        .event-badge.favorite {
+            border-left-color: var(--accent-red);
+            background-color: rgba(255, 215, 0, 0.12);
+        }
+
         /* イベント件数バッジ */
         .event-count-badge {
             position: absolute;
@@ -452,7 +457,7 @@
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 20px;
+            padding: 20px 58px 20px 20px;
             position: relative;
         }
 
@@ -468,6 +473,37 @@
 
         [data-theme="light"] .modal-event-card h3 {
             color: #1c1c1e;
+        }
+
+        .favorite-toggle {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            background: var(--container-bg);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.25rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+        }
+
+        .favorite-toggle:hover {
+            background-color: var(--cell-hover-bg);
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+
+        .favorite-toggle.active {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            background-color: rgba(255, 215, 0, 0.12);
         }
 
         .ward-tag {
@@ -799,7 +835,7 @@
                 margin-bottom: 15px;
             }
             .modal-event-card {
-                padding: 15px;
+                padding: 15px 52px 15px 15px;
             }
             .modal-event-card h3 {
                 font-size: 1.1rem;
@@ -981,6 +1017,65 @@
 
     <script src="./submission-config.js"></script>
     <script>
+        const FAVORITES_STORAGE_KEY = 'bonodoriFavoritesV1';
+        const favoriteIds = loadFavoriteIds();
+
+        function getEventId(ev) {
+            return [ev.name, ev.place, ev.date_str, ev.source_url].join('|');
+        }
+
+        function loadFavoriteIds() {
+            try {
+                const stored = window.localStorage.getItem(FAVORITES_STORAGE_KEY);
+                const parsed = stored ? JSON.parse(stored) : [];
+                return new Set(Array.isArray(parsed) ? parsed : []);
+            } catch (error) {
+                console.warn('Failed to load favorites:', error);
+                return new Set();
+            }
+        }
+
+        function saveFavoriteIds() {
+            try {
+                window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify([...favoriteIds]));
+            } catch (error) {
+                console.warn('Failed to save favorites:', error);
+            }
+        }
+
+        function isFavorite(ev) {
+            return favoriteIds.has(getEventId(ev));
+        }
+
+        function sortEventsByFavorite(events) {
+            return events
+                .map((event, index) => ({ event, index }))
+                .sort((a, b) => {
+                    const favoriteDelta = Number(isFavorite(b.event)) - Number(isFavorite(a.event));
+                    return favoriteDelta || a.index - b.index;
+                })
+                .map(item => item.event);
+        }
+
+        function toggleFavorite(ev) {
+            const eventId = getEventId(ev);
+            if (favoriteIds.has(eventId)) {
+                favoriteIds.delete(eventId);
+            } else {
+                favoriteIds.add(eventId);
+            }
+            saveFavoriteIds();
+        }
+
+        function setFavoriteButtonState(button, ev) {
+            const active = isFavorite(ev);
+            button.classList.toggle('active', active);
+            button.textContent = active ? '★' : '☆';
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            button.setAttribute('aria-label', active ? 'お気に入りから外す' : 'お気に入りに追加');
+            button.title = active ? 'お気に入りから外す' : 'お気に入りに追加';
+        }
+
         // 起動時にデータソースJSONを非同期ロード
         fetch('./events.json')
             .then(response => {
@@ -1053,9 +1148,11 @@
                 const eventContainer = document.createElement('div');
                 eventContainer.className = 'cell-events';
                 
-                eventsOnDay.slice(0, 3).forEach(ev => {
+                const sortedEventsOnDay = sortEventsByFavorite(eventsOnDay);
+
+                sortedEventsOnDay.slice(0, 3).forEach(ev => {
                     const badge = document.createElement('div');
-                    badge.className = 'event-badge';
+                    badge.className = `event-badge${isFavorite(ev) ? ' favorite' : ''}`;
                     badge.textContent = `[${ev.ward.replace('大阪市', '')}] ${ev.name}`;
                     eventContainer.appendChild(badge);
                 });
@@ -1072,7 +1169,7 @@
                 cell.appendChild(eventContainer);
                 
                 if (eventsOnDay.length > 0) {
-                    cell.addEventListener('click', () => showModal(month, day, eventsOnDay));
+                    cell.addEventListener('click', () => showModal(month, day, sortedEventsOnDay));
                 }
                 
                 grid.appendChild(cell);
@@ -1088,7 +1185,7 @@
             modalDate.textContent = `${month}月${day}日 の開催盆踊り一覧 (${eventsOnDay.length}件)`;
             modalEventsList.innerHTML = '';
             
-            eventsOnDay.forEach(ev => {
+            sortEventsByFavorite(eventsOnDay).forEach(ev => {
                 const card = document.createElement('div');
                 card.className = 'modal-event-card';
                 
@@ -1111,6 +1208,16 @@
                         <span><a href="${ev.source_url}" target="_blank" class="source-link">${ev.source_name} ↗</a></span>
                     </div>
                 `;
+                const favoriteButton = document.createElement('button');
+                favoriteButton.className = 'favorite-toggle';
+                favoriteButton.type = 'button';
+                setFavoriteButtonState(favoriteButton, ev);
+                favoriteButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    toggleFavorite(ev);
+                    setFavoriteButtonState(favoriteButton, ev);
+                });
+                card.appendChild(favoriteButton);
                 modalEventsList.appendChild(card);
             });
             
