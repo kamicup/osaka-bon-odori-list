@@ -522,7 +522,7 @@ html_template = """<!DOCTYPE html>
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 20px 58px 20px 20px;
+            padding: 20px 100px 20px 20px;
             position: relative;
         }
 
@@ -540,10 +540,9 @@ html_template = """<!DOCTYPE html>
             color: #1c1c1e;
         }
 
-        .favorite-toggle {
+        .event-action-button {
             position: absolute;
             top: 14px;
-            right: 14px;
             width: 34px;
             height: 34px;
             border: 1px solid var(--border-color);
@@ -559,10 +558,19 @@ html_template = """<!DOCTYPE html>
             transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
         }
 
-        .favorite-toggle:hover {
+        .event-action-button:hover {
             background-color: var(--cell-hover-bg);
             border-color: var(--primary-color);
             transform: translateY(-1px);
+        }
+
+        .calendar-add {
+            right: 56px;
+            font-size: 1rem;
+        }
+
+        .favorite-toggle {
+            right: 14px;
         }
 
         .favorite-toggle.active {
@@ -1141,6 +1149,37 @@ html_template = """<!DOCTYPE html>
             button.title = active ? 'お気に入りから外す' : 'お気に入りに追加';
         }
 
+        function formatGoogleCalendarDate(month, day) {
+            return `2026${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+        }
+
+        function getNextGoogleCalendarDate(month, day) {
+            const date = new Date(2026, month - 1, day);
+            date.setDate(date.getDate() + 1);
+            return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function buildGoogleCalendarUrl(ev, month, day) {
+            const startDate = formatGoogleCalendarDate(month, day);
+            const endDate = getNextGoogleCalendarDate(month, day);
+            const details = [
+                `開催日: ${ev.date_str}`,
+                ev.notes ? `特記事項: ${ev.notes}` : '',
+                ev.performer && ev.performer !== '詳細記載なし' ? `出演者: ${ev.performer}` : '',
+                `情報ソース: ${ev.source_name}`,
+                ev.source_url
+            ].filter(Boolean).join('\\n');
+            const params = new URLSearchParams({
+                action: 'TEMPLATE',
+                text: ev.name,
+                dates: `${startDate}/${endDate}`,
+                details,
+                location: ev.place,
+                ctz: 'Asia/Tokyo'
+            });
+            return `https://calendar.google.com/calendar/render?${params.toString()}`;
+        }
+
         // 起動時にデータソースJSONを非同期ロード
         fetch('./events.json')
             .then(response => {
@@ -1273,8 +1312,19 @@ html_template = """<!DOCTYPE html>
                         <span><a href="${ev.source_url}" target="_blank" class="source-link">${ev.source_name} ↗</a></span>
                     </div>
                 `;
+                const calendarButton = document.createElement('button');
+                calendarButton.className = 'event-action-button calendar-add';
+                calendarButton.type = 'button';
+                calendarButton.textContent = '📅';
+                calendarButton.setAttribute('aria-label', 'Googleカレンダーに追加');
+                calendarButton.title = 'Googleカレンダーに追加';
+                calendarButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    window.open(buildGoogleCalendarUrl(ev, month, day), '_blank', 'noopener');
+                });
+
                 const favoriteButton = document.createElement('button');
-                favoriteButton.className = 'favorite-toggle';
+                favoriteButton.className = 'event-action-button favorite-toggle';
                 favoriteButton.type = 'button';
                 setFavoriteButtonState(favoriteButton, ev);
                 favoriteButton.addEventListener('click', (event) => {
@@ -1282,6 +1332,7 @@ html_template = """<!DOCTYPE html>
                     toggleFavorite(ev);
                     setFavoriteButtonState(favoriteButton, ev);
                 });
+                card.appendChild(calendarButton);
                 card.appendChild(favoriteButton);
                 modalEventsList.appendChild(card);
             });
