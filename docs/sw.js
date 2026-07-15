@@ -1,7 +1,9 @@
-const CACHE_NAME = 'bonodori-cache-v11';
+const CACHE_NAME = 'bonodori-cache-v12';
 const urlsToCache = [
   './',
   './index.html',
+  './robots.txt',
+  './sitemap.xml',
   './manifest.json',
   './events.json',
   './submission-config.js',

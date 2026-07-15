@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kamicup.github.io/osaka-bon-odori-list/sitemap.xml

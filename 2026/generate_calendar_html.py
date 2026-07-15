@@ -62,13 +62,93 @@ with open(events_json_path, 'w', encoding='utf-8') as f:
     json.dump(events, f, ensure_ascii=False, indent=2)
 print(f"Data source JSON generated at {events_json_path}")
 
+site_url = "https://kamicup.github.io/osaka-bon-odori-list/"
+site_title = "大阪市盆踊りカレンダー 2026｜夏祭り日程・会場一覧"
+site_description = "2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたインタラクティブカレンダーです。"
+
+def build_structured_event(event):
+    address = "大阪府" if event["ward"] == "大阪市外" else f"大阪府大阪市{event['ward']}"
+    structured_event = {
+        "@type": "Event",
+        "name": event["name"],
+        "startDate": f"2026-{event['dates'][0][0]:02d}-{event['dates'][0][1]:02d}",
+        "endDate": f"2026-{event['dates'][-1][0]:02d}-{event['dates'][-1][1]:02d}",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "eventStatus": "https://schema.org/EventScheduled",
+        "location": {
+            "@type": "Place",
+            "name": event["place"],
+            "address": address
+        },
+        "description": f"{event['date_str']}、{event['place']}で開催。{event['notes']}"
+    }
+    if event["source_url"] and event["source_url"] != "#":
+        structured_event["url"] = event["source_url"]
+    return structured_event
+
+structured_data = {
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "WebSite",
+            "@id": f"{site_url}#website",
+            "url": site_url,
+            "name": "大阪市盆踊りカレンダー 2026",
+            "description": site_description,
+            "inLanguage": "ja"
+        },
+        {
+            "@type": "WebApplication",
+            "@id": f"{site_url}#webapp",
+            "url": site_url,
+            "name": "大阪市盆踊りカレンダー 2026",
+            "applicationCategory": "TravelApplication",
+            "operatingSystem": "Any",
+            "description": site_description,
+            "inLanguage": "ja"
+        },
+        {
+            "@type": "ItemList",
+            "@id": f"{site_url}#events",
+            "name": "大阪市盆踊り・夏祭り日程一覧 2026",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": index + 1,
+                    "item": build_structured_event(event)
+                }
+                for index, event in enumerate(events)
+            ]
+        }
+    ]
+}
+structured_data_json = json.dumps(structured_data, ensure_ascii=False, separators=(',', ':'))
+
 # 3. HTMLビューの生成 (fetch('./events.json') による非同期ロードに変更)
 html_template = """<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大阪市盆踊りカレンダー 2026</title>
+    <title>大阪市盆踊りカレンダー 2026｜夏祭り日程・会場一覧</title>
+    <meta name="description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたインタラクティブカレンダーです。">
+    <meta name="keywords" content="大阪市,盆踊り,盆踊り大会,夏祭り,大阪 夏祭り,大阪 盆踊り,2026,カレンダー">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://kamicup.github.io/osaka-bon-odori-list/">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="大阪市盆踊りカレンダー">
+    <meta property="og:title" content="大阪市盆踊りカレンダー 2026｜夏祭り日程・会場一覧">
+    <meta property="og:description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたインタラクティブカレンダーです。">
+    <meta property="og:url" content="https://kamicup.github.io/osaka-bon-odori-list/">
+    <meta property="og:image" content="https://kamicup.github.io/osaka-bon-odori-list/icon-512.png">
+    <meta property="og:locale" content="ja_JP">
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="大阪市盆踊りカレンダー 2026｜夏祭り日程・会場一覧">
+    <meta name="twitter:description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたインタラクティブカレンダーです。">
+    <meta name="twitter:image" content="https://kamicup.github.io/osaka-bon-odori-list/icon-512.png">
+    <script type="application/ld+json">__STRUCTURED_DATA_JSON__</script>
     
     <!-- PWA用のメタタグ & リンク -->
     <meta name="theme-color" content="#070913">
@@ -1609,7 +1689,7 @@ html_template = """<!DOCTYPE html>
 # HTMLファイルの書き出し
 html_output_path = os.path.join(docs_dir, 'index.html')
 with open(html_output_path, 'w', encoding='utf-8') as f:
-    f.write(html_template)
+    f.write(html_template.replace('__STRUCTURED_DATA_JSON__', structured_data_json))
 print(f"HTML View generated at {html_output_path}")
 
 print("Separation of HTML View and JSON Data Source completed successfully.")
