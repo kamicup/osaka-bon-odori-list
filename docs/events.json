@@ -591,6 +591,26 @@
     "dates": [
       [
         8,
+        4
+      ],
+      [
+        8,
+        5
+      ]
+    ],
+    "date_str": "2026年8月4日（火） ～8月5日（水）",
+    "name": "中大江盆踊り大会2026",
+    "place": "中大江公園",
+    "ward": "中央区",
+    "performer": "詳細記載なし",
+    "source_name": "大阪中心「中大江盆踊り大会2026」",
+    "source_url": "https://osaka-chushin.jp/event/64704",
+    "notes": "日没～22:30頃。中大江・北大江地域活動協議会／中大江校下盆踊り実行委員会による開催。"
+  },
+  {
+    "dates": [
+      [
+        8,
         5
       ]
     ],
@@ -694,6 +714,22 @@
     "source_name": "四天王寺公式サイト",
     "source_url": "https://www.shitennoji.or.jp/",
     "notes": "18:30～20:30。伝統ある大規模盆踊り。生歌による本格的な河内音頭が披露される。"
+  },
+  {
+    "dates": [
+      [
+        8,
+        15
+      ]
+    ],
+    "date_str": "2026年8月15日（土）",
+    "name": "第4回スタぼん～スタジアムぼんおどり～",
+    "place": "ヤンマースタジアム長居",
+    "ward": "東住吉区",
+    "performer": "詳細記載なし",
+    "source_name": "長居公園「第4回スタぼん～スタジアムぼんおどり～」",
+    "source_url": "https://nagaipark.com/events/000355",
+    "notes": "15:30～21:00（一部時間制）。盆踊りは18:00～20:45頃。雨天時は時間を一部変更し、屋内で開催予定。"
   },
   {
     "dates": [
@@ -1122,5 +1158,21 @@
     "source_name": "西区広報紙「かぜ」7月号",
     "source_url": "https://www.city.osaka.lg.jp/nishi/cmsfiles/contents/0000676/676323/nishiku_kaze_202607.pdf",
     "notes": "19:00～21:00。（予備日30日）"
+  },
+  {
+    "dates": [
+      [
+        8,
+        31
+      ]
+    ],
+    "date_str": "2026年8月31日（月）",
+    "name": "中之島なつまつり2026",
+    "place": "大阪国際会議場（グランキューブ大阪）1階プラザ・中之島バンクス",
+    "ward": "北区",
+    "performer": "**河内家菊水丸**（河内音頭）",
+    "source_name": "大阪市北区「地域のイベント情報」",
+    "source_url": "https://www.city.osaka.lg.jp/kita/page/0000627747.html",
+    "notes": "17:00～21:00。中之島地域で開催。雨天時対応は公式掲載なし。"
   }
 ]
