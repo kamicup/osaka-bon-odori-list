@@ -44,6 +44,8 @@
             --accent-red: #ff4d4d;
             --accent-blue: #1e90ff;
             --cell-hover-bg: rgba(255, 255, 255, 0.07);
+            --today-bg: rgba(255, 215, 0, 0.12);
+            --today-ring: rgba(255, 215, 0, 0.45);
             --modal-bg: rgba(15, 18, 36, 0.95);
             --card-bg: rgba(255, 255, 255, 0.05);
             --lantern-glow: 0 0 15px #ff8c00, 0 0 30px #ff4500;
@@ -59,6 +61,8 @@
             --accent-red: #d32f2f;
             --accent-blue: #1976d2;
             --cell-hover-bg: #f0f2f5;
+            --today-bg: rgba(184, 134, 11, 0.12);
+            --today-ring: rgba(184, 134, 11, 0.4);
             --modal-bg: rgba(255, 255, 255, 0.98);
             --card-bg: #f5f5f7;
             --lantern-glow: 0 0 8px rgba(255, 69, 0, 0.3);
@@ -311,6 +315,21 @@
             border-color: var(--primary-color);
         }
 
+        .calendar-cell.today {
+            background-color: var(--today-bg);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--today-ring);
+        }
+
+        .calendar-cell.today .day-number {
+            min-width: 2rem;
+            padding: 0.2rem 0.45rem;
+            border-radius: 999px;
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+            text-align: center;
+        }
+
         .day-number {
             font-size: 1.2rem;
             font-weight: 700;
@@ -320,6 +339,7 @@
 
         .calendar-cell.sun .day-number { color: var(--accent-red); }
         .calendar-cell.sat .day-number { color: var(--accent-blue); }
+        .calendar-cell.today .day-number { color: var(--bg-color); }
         .calendar-cell.empty {
             opacity: 0.2;
             border-style: dashed;
@@ -1168,6 +1188,7 @@
             const grid = document.getElementById(gridId);
             const daysInMonth = 31;
             const startWeekday = new Date(2026, month - 1, 1).getDay();
+            const today = new Date();
             
             for (let i = 0; i < startWeekday; i++) {
                 const emptyCell = document.createElement('div');
@@ -1182,6 +1203,10 @@
                 let cellClass = 'calendar-cell';
                 if (weekday === 0) cellClass += ' sun';
                 if (weekday === 6) cellClass += ' sat';
+                if (today.getFullYear() === 2026 && today.getMonth() === month - 1 && today.getDate() === day) {
+                    cellClass += ' today';
+                    cell.setAttribute('aria-current', 'date');
+                }
                 
                 const eventsOnDay = calendarEvents[month]?.[day] || [];
                 if (eventsOnDay.length > 0) {
