@@ -1183,6 +1183,26 @@
     "dates": [
       [
         8,
+        29
+      ],
+      [
+        8,
+        30
+      ]
+    ],
+    "date_str": "2026年8月29日（土） ～8月30日（日）",
+    "name": "VON DANCE FESTA 2026",
+    "place": "靱公園東園広場",
+    "ward": "西区",
+    "performer": "詳細記載なし",
+    "source_name": "靱公園くらしとみどりネットワーク「VON DANCE FESTA 2026」",
+    "source_url": "https://rosefesta.com/news/vondance-festa2026/",
+    "notes": "13:00～20:30。盆踊りタイムは17:00～20:30。雨天中止（小雨決行）。主催：靱公園くらしとみどりネットワーク、後援：大阪市西区役所。"
+  },
+  {
+    "dates": [
+      [
+        8,
         31
       ]
     ],
