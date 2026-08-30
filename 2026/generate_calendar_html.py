@@ -1,6 +1,8 @@
 import os
 import re
 import json
+import html
+from datetime import datetime
 
 # 1. データの読み込みとパース
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -63,8 +65,39 @@ with open(events_json_path, 'w', encoding='utf-8') as f:
 print(f"Data source JSON generated at {events_json_path}")
 
 site_url = "https://kamicup.github.io/osaka-bon-odori-list/"
-site_title = "大阪市盆踊りカレンダー 2026｜夏祭り日程・会場一覧"
-site_description = "2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたインタラクティブカレンダーです。"
+site_title = "大阪市の盆踊り 2026年｜日程・会場一覧カレンダー"
+site_description = "2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたカレンダーです。"
+updated_date = datetime.fromtimestamp(
+    max(os.path.getmtime(report_path), os.path.getmtime(__file__))
+).date().isoformat()
+
+
+def event_source_link(event):
+    source_name = html.escape(event["source_name"])
+    source_url = event["source_url"]
+    if source_url and source_url != "#":
+        return f'<a href="{html.escape(source_url, quote=True)}" rel="noopener noreferrer">{source_name}</a>'
+    return source_name
+
+
+osaka_city_events = [event for event in events if event["ward"] != "大阪市外"]
+
+static_event_rows = "\n".join(
+    """<tr>
+                    <td>{date}</td>
+                    <td>{name}</td>
+                    <td>{ward}</td>
+                    <td>{place}</td>
+                    <td>{source}</td>
+                </tr>""".format(
+        date=html.escape(event["date_str"]),
+        name=html.escape(event["name"]),
+        ward=html.escape(event["ward"]),
+        place=html.escape(event["place"]),
+        source=event_source_link(event),
+    )
+    for event in osaka_city_events
+)
 
 def build_structured_event(event):
     address = "大阪府" if event["ward"] == "大阪市外" else f"大阪府大阪市{event['ward']}"
@@ -108,6 +141,15 @@ structured_data = {
             "inLanguage": "ja"
         },
         {
+            "@type": "WebPage",
+            "@id": f"{site_url}#webpage",
+            "url": site_url,
+            "name": site_title,
+            "description": site_description,
+            "inLanguage": "ja",
+            "dateModified": updated_date
+        },
+        {
             "@type": "ItemList",
             "@id": f"{site_url}#events",
             "name": "大阪市盆踊り・夏祭り日程一覧 2026",
@@ -130,23 +172,23 @@ html_template = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大阪市盆踊りカレンダー 2026｜夏祭り日程・会場一覧</title>
-    <meta name="description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたインタラクティブカレンダーです。">
+    <title>大阪市の盆踊り 2026年｜日程・会場一覧カレンダー</title>
+    <meta name="description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたカレンダーです。">
     <meta name="keywords" content="大阪市,盆踊り,盆踊り大会,夏祭り,大阪 夏祭り,大阪 盆踊り,2026,カレンダー">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://kamicup.github.io/osaka-bon-odori-list/">
     
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="大阪市盆踊りカレンダー">
-    <meta property="og:title" content="大阪市盆踊りカレンダー 2026｜夏祭り日程・会場一覧">
-    <meta property="og:description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたインタラクティブカレンダーです。">
+    <meta property="og:title" content="大阪市の盆踊り 2026年｜日程・会場一覧カレンダー">
+    <meta property="og:description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたカレンダーです。">
     <meta property="og:url" content="https://kamicup.github.io/osaka-bon-odori-list/">
     <meta property="og:image" content="https://kamicup.github.io/osaka-bon-odori-list/icon-512.png">
     <meta property="og:locale" content="ja_JP">
     
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="大阪市盆踊りカレンダー 2026｜夏祭り日程・会場一覧">
-    <meta name="twitter:description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたインタラクティブカレンダーです。">
+    <meta name="twitter:title" content="大阪市の盆踊り 2026年｜日程・会場一覧カレンダー">
+    <meta name="twitter:description" content="2026年夏に大阪市内で開催される盆踊り・夏祭りの日程、会場、区、公式情報ソースをまとめたカレンダーです。">
     <meta name="twitter:image" content="https://kamicup.github.io/osaka-bon-odori-list/icon-512.png">
     <script type="application/ld+json">__STRUCTURED_DATA_JSON__</script>
     
@@ -523,6 +565,60 @@ html_template = """<!DOCTYPE html>
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .seo-content {
+            max-width: 1100px;
+            width: 100%;
+            margin: 50px auto 0;
+            padding: 0 20px;
+        }
+
+        .seo-section {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 24px;
+            line-height: 1.8;
+        }
+
+        .seo-section h2 {
+            color: var(--primary-color);
+            font-size: 1.7rem;
+            margin-bottom: 14px;
+        }
+
+        .seo-section p + p {
+            margin-top: 12px;
+        }
+
+        .event-table-wrapper {
+            overflow-x: auto;
+            margin-top: 18px;
+        }
+
+        .event-table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+            font-size: 0.94rem;
+        }
+
+        .event-table th, .event-table td {
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .event-table th {
+            color: var(--primary-color);
+            white-space: nowrap;
+        }
+
+        .event-table a, .seo-section a {
+            color: var(--primary-color);
         }
 
         /* フッター全体のコンテナ */
@@ -993,6 +1089,16 @@ html_template = """<!DOCTYPE html>
                 max-width: 100%;
                 width: 100%;
             }
+            .seo-content {
+                padding: 0 10px;
+                margin-top: 30px;
+            }
+            .seo-section {
+                padding: 20px 15px;
+            }
+            .seo-section h2 {
+                font-size: 1.35rem;
+            }
             footer {
                 padding: 20px;
                 font-size: 0.9rem;
@@ -1056,7 +1162,7 @@ html_template = """<!DOCTYPE html>
                     <button class="header-action-btn theme-switch" id="themeBtn" type="button">ライトモードにする</button>
                 </div>
             </div>
-            <h1>大阪市盆踊りカレンダー 2026</h1>
+            <h1>大阪市の盆踊り 2026年カレンダー</h1>
             <p>令和8年夏（7月・8月）開催の公式アナウンス一覧</p>
         </div>
     </header>
@@ -1097,9 +1203,37 @@ html_template = """<!DOCTYPE html>
         </div>
     </div>
 
+    <main class="seo-content">
+        <section class="seo-section" aria-labelledby="about-heading">
+            <h2 id="about-heading">大阪市の盆踊り・夏祭り日程（2026年）</h2>
+            <p>大阪市内で2026年夏に開催される盆踊り・夏祭りを、主催者・自治体などの公式発表を確認して掲載しています。日付、会場、区、公式情報を確認し、参加前には主催者の最新発表をご確認ください。</p>
+            <p>最終更新日：<time datetime="__UPDATED_DATE__">__UPDATED_DATE__</time>。カレンダーで日付を選ぶと、当日の開催情報を確認できます。</p>
+        </section>
+
+        <section class="seo-section" aria-labelledby="list-heading">
+            <h2 id="list-heading">大阪市盆踊り・夏祭り一覧</h2>
+            <p>日程順の全一覧です。会場や開催内容の詳細は、各イベントの公式情報をご覧ください。</p>
+            <div class="event-table-wrapper">
+                <table class="event-table">
+                    <thead>
+                        <tr><th scope="col">開催日</th><th scope="col">名称</th><th scope="col">区</th><th scope="col">会場</th><th scope="col">公式情報</th></tr>
+                    </thead>
+                    <tbody>
+__STATIC_EVENT_ROWS__
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="seo-section" aria-labelledby="policy-heading">
+            <h2 id="policy-heading">掲載方針・情報の訂正</h2>
+            <p>掲載は公式サイト、自治体の広報、主催者による告知など、出典を確認できる情報を対象としています。情報の追加・訂正は、ページ上部の「情報を投稿」から公式URLとともにお知らせください。確認後に反映します。</p>
+        </section>
+    </main>
+
     <div class="footer-container">
         <footer>
-            ※免責事項: 本カレンダーは2026年7月1日時点のAI調査に基づく初版に、匿名投稿で寄せられた情報を確認のうえ加えてメンテナンスしているものです。実際の開催情報と異なる場合があるため、お出かけの際は必ず各主催者の最新の公式発表をご確認ください。
+            ※免責事項: 本カレンダーは公式発表を確認して掲載していますが、内容の変更や中止が生じる場合があります。お出かけの際は必ず各主催者の最新の公式発表をご確認ください。
         </footer>
     </div>
 
@@ -1714,7 +1848,27 @@ html_template = """<!DOCTYPE html>
 # HTMLファイルの書き出し
 html_output_path = os.path.join(docs_dir, 'index.html')
 with open(html_output_path, 'w', encoding='utf-8') as f:
-    f.write(html_template.replace('__STRUCTURED_DATA_JSON__', structured_data_json))
+    f.write(
+        html_template
+        .replace('__STRUCTURED_DATA_JSON__', structured_data_json)
+        .replace('__STATIC_EVENT_ROWS__', static_event_rows)
+        .replace('__UPDATED_DATE__', updated_date)
+    )
 print(f"HTML View generated at {html_output_path}")
+
+sitemap_output_path = os.path.join(docs_dir, 'sitemap.xml')
+sitemap = f'''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>{site_url}</loc>
+    <lastmod>{updated_date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+'''
+with open(sitemap_output_path, 'w', encoding='utf-8') as f:
+    f.write(sitemap)
+print(f"Sitemap generated at {sitemap_output_path}")
 
 print("Separation of HTML View and JSON Data Source completed successfully.")

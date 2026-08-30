@@ -35,6 +35,7 @@ def main():
     print("以下の成果物がすべて更新されました：")
     print(" - docs/index.html (HTMLビュー)")
     print(" - docs/events.json (JSONデータソース)")
+    print(" - docs/sitemap.xml (サイトマップ)")
     print("==================================================")
     print("Gitへのコミット・プッシュを実行する準備が整いました。")
 
