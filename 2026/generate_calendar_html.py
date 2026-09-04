@@ -1163,7 +1163,7 @@ html_template = """<!DOCTYPE html>
                 </div>
             </div>
             <h1>大阪市の盆踊り 2026年カレンダー</h1>
-            <p>令和8年夏（7月・8月）開催の公式アナウンス一覧</p>
+            <p>令和8年夏（7月・8月・9月）開催の公式アナウンス一覧</p>
         </div>
     </header>
 
@@ -1190,6 +1190,23 @@ html_template = """<!DOCTYPE html>
             <div class="month-title">8月 August</div>
             <div class="calendar-wrapper">
                 <div class="calendar-grid" id="augGrid">
+                    <!-- 曜日ヘッダー -->
+                    <div class="weekday-header sun">日</div>
+                    <div class="weekday-header">月</div>
+                    <div class="weekday-header">火</div>
+                    <div class="weekday-header">水</div>
+                    <div class="weekday-header">木</div>
+                    <div class="weekday-header">金</div>
+                    <div class="weekday-header">土</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 9月カレンダー -->
+        <div class="month-section">
+            <div class="month-title">9月 September</div>
+            <div class="calendar-wrapper">
+                <div class="calendar-grid" id="sepGrid">
                     <!-- 曜日ヘッダー -->
                     <div class="weekday-header sun">日</div>
                     <div class="weekday-header">月</div>
@@ -1439,6 +1456,7 @@ __STATIC_EVENT_ROWS__
                 // カレンダーの描画実行
                 renderCalendar(7, 'julyGrid', calendarEvents);
                 renderCalendar(8, 'augGrid', calendarEvents);
+                renderCalendar(9, 'sepGrid', calendarEvents);
             })
             .catch(err => {
                 console.error('Failed to load events data:', err);
@@ -1447,7 +1465,7 @@ __STATIC_EVENT_ROWS__
 
         function renderCalendar(month, gridId, calendarEvents) {
             const grid = document.getElementById(gridId);
-            const daysInMonth = 31;
+            const daysInMonth = new Date(2026, month, 0).getDate();
             const startWeekday = new Date(2026, month - 1, 1).getDay();
             const today = new Date();
             
