@@ -80,8 +80,6 @@ def event_source_link(event):
     return source_name
 
 
-osaka_city_events = [event for event in events if event["ward"] != "大阪市外"]
-
 static_event_rows = "\n".join(
     """<tr>
                     <td>{date}</td>
@@ -96,7 +94,7 @@ static_event_rows = "\n".join(
         place=html.escape(event["place"]),
         source=event_source_link(event),
     )
-    for event in osaka_city_events
+    for event in events
 )
 
 def build_structured_event(event):
@@ -1228,8 +1226,8 @@ html_template = """<!DOCTYPE html>
         </section>
 
         <section class="seo-section" aria-labelledby="list-heading">
-            <h2 id="list-heading">大阪市盆踊り・夏祭り一覧</h2>
-            <p>日程順の全一覧です。会場や開催内容の詳細は、各イベントの公式情報をご覧ください。</p>
+            <h2 id="list-heading">掲載中の盆踊り・夏祭り一覧</h2>
+            <p>大阪市外を含む、カレンダー掲載イベントの日程順一覧です。会場や開催内容の詳細は、各イベントの公式情報をご覧ください。</p>
             <div class="event-table-wrapper">
                 <table class="event-table">
                     <thead>
