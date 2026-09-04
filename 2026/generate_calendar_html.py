@@ -1441,10 +1441,10 @@ __STATIC_EVENT_ROWS__
             })
             .then(events => {
                 // ロードしたイベントデータから日付マップを動的に作成
-                const calendarEvents = {7: {}, 8: {}};
+                const calendarEvents = {7: {}, 8: {}, 9: {}};
                 events.forEach(ev => {
                     ev.dates.forEach(([m, d]) => {
-                        if (m === 7 || m === 8) {
+                        if (calendarEvents[m]) {
                             if (!calendarEvents[m][d]) {
                                 calendarEvents[m][d] = [];
                             }
