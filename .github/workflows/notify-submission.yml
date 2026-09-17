@@ -1,0 +1,19 @@
+name: Notify on festival submissions
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  assign-submission:
+    if: contains(github.event.issue.labels.*.name, 'submission')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Assign submission to kamicup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: gh api --method POST "repos/$GH_REPO/issues/$ISSUE_NUMBER/assignees" -f 'assignees[]=kamicup'
