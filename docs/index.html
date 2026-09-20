@@ -1005,62 +1005,11 @@
                 </div>
             </div>
             <h1>大阪市の盆踊り 2026年カレンダー</h1>
-            <p>令和8年夏（7月・8月・9月）開催の公式アナウンス一覧</p>
+            <p>令和8年開催の公式アナウンス一覧</p>
         </div>
     </header>
 
-    <div class="main-container">
-        <!-- 7月カレンダー -->
-        <div class="month-section">
-            <div class="month-title">7月 July</div>
-            <div class="calendar-wrapper">
-                <div class="calendar-grid" id="julyGrid">
-                    <!-- 曜日ヘッダー -->
-                    <div class="weekday-header sun">日</div>
-                    <div class="weekday-header">月</div>
-                    <div class="weekday-header">火</div>
-                    <div class="weekday-header">水</div>
-                    <div class="weekday-header">木</div>
-                    <div class="weekday-header">金</div>
-                    <div class="weekday-header">土</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 8月カレンダー -->
-        <div class="month-section">
-            <div class="month-title">8月 August</div>
-            <div class="calendar-wrapper">
-                <div class="calendar-grid" id="augGrid">
-                    <!-- 曜日ヘッダー -->
-                    <div class="weekday-header sun">日</div>
-                    <div class="weekday-header">月</div>
-                    <div class="weekday-header">火</div>
-                    <div class="weekday-header">水</div>
-                    <div class="weekday-header">木</div>
-                    <div class="weekday-header">金</div>
-                    <div class="weekday-header">土</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 9月カレンダー -->
-        <div class="month-section">
-            <div class="month-title">9月 September</div>
-            <div class="calendar-wrapper">
-                <div class="calendar-grid" id="sepGrid">
-                    <!-- 曜日ヘッダー -->
-                    <div class="weekday-header sun">日</div>
-                    <div class="weekday-header">月</div>
-                    <div class="weekday-header">火</div>
-                    <div class="weekday-header">水</div>
-                    <div class="weekday-header">木</div>
-                    <div class="weekday-header">金</div>
-                    <div class="weekday-header">土</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="main-container" id="calendarContainer"></div>
 
     <main class="seo-content">
         <section class="seo-section" aria-labelledby="about-heading">
@@ -1807,30 +1756,63 @@
             })
             .then(events => {
                 // ロードしたイベントデータから日付マップを動的に作成
-                const calendarEvents = {7: {}, 8: {}, 9: {}};
+                const calendarEvents = {};
                 events.forEach(ev => {
                     ev.dates.forEach(([m, d]) => {
-                        if (calendarEvents[m]) {
-                            if (!calendarEvents[m][d]) {
-                                calendarEvents[m][d] = [];
-                            }
-                            calendarEvents[m][d].push(ev);
+                        if (!Number.isInteger(m) || !Number.isInteger(d) || m < 1 || m > 12) {
+                            return;
                         }
+
+                        if (!calendarEvents[m]) calendarEvents[m] = {};
+                        if (!calendarEvents[m][d]) calendarEvents[m][d] = [];
+                        calendarEvents[m][d].push(ev);
                     });
                 });
-                
-                // カレンダーの描画実行
-                renderCalendar(7, 'julyGrid', calendarEvents);
-                renderCalendar(8, 'augGrid', calendarEvents);
-                renderCalendar(9, 'sepGrid', calendarEvents);
+
+                Object.keys(calendarEvents)
+                    .map(Number)
+                    .sort((a, b) => a - b)
+                    .forEach(month => renderCalendar(month, calendarEvents));
             })
             .catch(err => {
                 console.error('Failed to load events data:', err);
                 // エラー時のフォールバック表示などが必要ならここに記述
             });
 
-        function renderCalendar(month, gridId, calendarEvents) {
-            const grid = document.getElementById(gridId);
+        const englishMonthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
+
+        function renderCalendar(month, calendarEvents) {
+            const calendarContainer = document.getElementById('calendarContainer');
+            const section = document.createElement('section');
+            section.className = 'month-section';
+
+            const title = document.createElement('h2');
+            title.className = 'month-title';
+            title.textContent = `${month}月 ${englishMonthNames[month - 1]}`;
+            section.appendChild(title);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'calendar-wrapper';
+
+            const grid = document.createElement('div');
+            grid.className = 'calendar-grid';
+            grid.setAttribute('aria-label', `2026年${month}月のカレンダー`);
+
+            weekdayNames.forEach((weekdayName, index) => {
+                const weekdayHeader = document.createElement('div');
+                weekdayHeader.className = `weekday-header${index === 0 ? ' sun' : index === 6 ? ' sat' : ''}`;
+                weekdayHeader.textContent = weekdayName;
+                grid.appendChild(weekdayHeader);
+            });
+
+            wrapper.appendChild(grid);
+            section.appendChild(wrapper);
+            calendarContainer.appendChild(section);
+
             const daysInMonth = new Date(2026, month, 0).getDate();
             const startWeekday = new Date(2026, month - 1, 1).getDay();
             const today = new Date();
