@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bonodori-cache-v26';
+const CACHE_NAME = 'bonodori-cache-v27';
 const urlsToCache = [
   './',
   './index.html',

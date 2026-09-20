@@ -202,6 +202,7 @@ html_template = """<!DOCTYPE html>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
+            color-scheme: dark;
             --bg-color: #070913;
             --container-bg: rgba(255, 255, 255, 0.03);
             --border-color: rgba(255, 255, 255, 0.08);
@@ -215,10 +216,12 @@ html_template = """<!DOCTYPE html>
             --today-ring: rgba(255, 215, 0, 0.45);
             --modal-bg: rgba(15, 18, 36, 0.95);
             --card-bg: rgba(255, 255, 255, 0.05);
+            --select-bg: #15182a;
             --lantern-glow: 0 0 15px #ff8c00, 0 0 30px #ff4500;
         }
 
         [data-theme="light"] {
+            color-scheme: light;
             --bg-color: #f4f5f6;
             --container-bg: #ffffff;
             --border-color: #e1e3e6;
@@ -232,6 +235,7 @@ html_template = """<!DOCTYPE html>
             --today-ring: rgba(184, 134, 11, 0.4);
             --modal-bg: rgba(255, 255, 255, 0.98);
             --card-bg: #f5f5f7;
+            --select-bg: #ffffff;
             --lantern-glow: 0 0 8px rgba(255, 69, 0, 0.3);
         }
 
@@ -856,6 +860,12 @@ html_template = """<!DOCTYPE html>
             resize: vertical;
         }
 
+        .form-field select,
+        .form-field select option {
+            background-color: var(--select-bg);
+            color: var(--text-color);
+        }
+
         .form-field input:focus,
         .form-field textarea:focus,
         .form-field select:focus {
@@ -1157,6 +1167,7 @@ html_template = """<!DOCTYPE html>
                 <div class="header-action-group">
                     <button class="header-action-btn" id="submissionBtn" type="button">情報を投稿</button>
                     <button class="header-action-btn install-btn" id="installBtn" type="button">アプリに追加</button>
+                    <button class="header-action-btn" id="reloadBtn" type="button">再読み込み</button>
                     <button class="header-action-btn theme-switch" id="themeBtn" type="button">ライトモードにする</button>
                 </div>
             </div>
@@ -1830,6 +1841,38 @@ __STATIC_EVENT_ROWS__
                 setSubmissionStatus(`送信できませんでした: ${error.message}`, 'error');
             } finally {
                 submissionSubmitBtn.disabled = false;
+            }
+        });
+
+        const reloadBtn = document.getElementById('reloadBtn');
+
+        reloadBtn.addEventListener('click', async () => {
+            reloadBtn.disabled = true;
+            reloadBtn.textContent = '更新中...';
+
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames
+                            .filter(cacheName => cacheName.startsWith('bonodori-cache-'))
+                            .map(cacheName => caches.delete(cacheName))
+                    );
+                }
+
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        await registration.update();
+                    }
+                }
+
+                window.location.reload();
+            } catch (error) {
+                console.error('Cache reload failed', error);
+                reloadBtn.disabled = false;
+                reloadBtn.textContent = '再読み込み';
+                window.alert('再読み込みに失敗しました。通常の再読み込みをお試しください。');
             }
         });
 
