@@ -1,53 +1,68 @@
-# Bon Odori Submission Worker
+# 盆踊り情報投稿 Worker
 
-This Worker receives anonymous festival information submissions from the public calendar and creates GitHub issues for review.
+この Worker は、公開カレンダーから匿名で投稿された祭り情報を受け取り、確認用の GitHub Issue を作成します。
 
-## Configure
+## 設定
 
-Set the GitHub token as a Worker secret. The token needs permission to create issues in `kamicup/osaka-bon-odori-list`.
-
-```bash
-cd workers/submissions
-wrangler secret put GITHUB_TOKEN
-```
-
-Optional Turnstile protection:
-
-```bash
-wrangler secret put TURNSTILE_SECRET_KEY
-```
-
-Set `ALLOWED_ORIGIN`, `GITHUB_OWNER`, `GITHUB_REPO`, and `ISSUE_LABELS` in `wrangler.jsonc`.
-
-## Renew GitHub Token
-
-`GITHUB_TOKEN` is issued with a 90-day expiration. Before publishing the next festival season, create a new fine-grained personal access token and update the Worker secret.
-
-1. Open GitHub `Settings` -> `Developer settings` -> `Personal access tokens` -> `Fine-grained tokens`.
-2. Generate a new token for `kamicup/osaka-bon-odori-list` only.
-3. Grant repository permission `Issues: Read and write`.
-4. Update the Worker secret and deploy:
+プロジェクトの依存関係をインストールし、ローカルの Wrangler CLI を確認します。
 
 ```bash
 cd workers/submissions
-wrangler secret put GITHUB_TOKEN
-wrangler deploy
+npm ci
+npx wrangler --version
 ```
 
-If this token expires, the public form remains visible but issue creation fails.
+必要に応じて Cloudflare にログインします。
 
-## Deploy
+```bash
+npx wrangler login
+```
+
+GitHub トークンを Worker のシークレットとして設定します。このトークンには、`kamicup/osaka-bon-odori-list` に Issue を作成する権限が必要です。
 
 ```bash
 cd workers/submissions
-wrangler deploy
+npx wrangler secret put GITHUB_TOKEN
 ```
 
-After deployment, update `docs/submission-config.js`:
+必要に応じて Turnstile による保護を設定します。
+
+```bash
+npx wrangler secret put TURNSTILE_SECRET_KEY
+```
+
+`wrangler.jsonc` で `ALLOWED_ORIGIN`、`GITHUB_OWNER`、`GITHUB_REPO`、`ISSUE_LABELS` を設定してください。
+
+## GitHub トークンの更新
+
+`GITHUB_TOKEN` の有効期限は発行から 90 日間です。次の祭りシーズンを公開する前に、新しい Fine-grained personal access token を作成し、Worker のシークレットを更新してください。
+
+1. GitHub の `Settings` → `Developer settings` → `Personal access tokens` → `Fine-grained tokens` を開きます。
+2. 対象リポジトリを `kamicup/osaka-bon-odori-list` のみに限定して、新しいトークンを作成します。
+3. リポジトリ権限の `Issues: Read and write` を付与します。
+4. Worker のシークレットを更新してデプロイします。
+
+```bash
+cd workers/submissions
+npx wrangler secret put GITHUB_TOKEN
+npx wrangler deploy
+```
+
+トークンの有効期限が切れた場合、公開フォームは引き続き表示されますが、Issue の作成に失敗します。
+
+## デプロイ
+
+```bash
+cd workers/submissions
+npx wrangler deploy --dry-run
+npx wrangler deploy
+```
+
+デプロイ後、`docs/submission-config.js` を更新します。
 
 ```js
 window.BONODORI_SUBMISSION_API_URL = "https://osaka-bon-odori-submissions.<your-subdomain>.workers.dev/submit";
 window.BONODORI_TURNSTILE_SITE_KEY = "";
 ```
 
-If Turnstile is enabled, set the public site key in `BONODORI_TURNSTILE_SITE_KEY`.
+Turnstile を有効にする場合は、公開用のサイトキーを `BONODORI_TURNSTILE_SITE_KEY` に設定してください。
