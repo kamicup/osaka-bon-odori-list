@@ -97,6 +97,29 @@ static_event_rows = "\n".join(
     for event in events
 )
 
+toc_months = sorted({month for event in events for month, _ in event["dates"]})
+
+toc_month_links = "\n".join(
+    """                        <li><a class="toc-link" href="#month-{month}">{month}月</a></li>""".format(
+        month=month
+    )
+    for month in toc_months
+)
+
+toc_sections = [
+    ("about-heading", "このページについて"),
+    ("list-heading", "掲載中の盆踊り・夏祭り一覧"),
+    ("policy-heading", "掲載方針・情報の訂正"),
+]
+
+toc_section_links = "\n".join(
+    """                        <li><a class="toc-link" href="#{anchor}">{label}</a></li>""".format(
+        anchor=html.escape(anchor), label=html.escape(label)
+    )
+    for anchor, label in toc_sections
+)
+
+
 def build_structured_event(event):
     address = "大阪府" if event["ward"] == "大阪市外" else f"大阪府大阪市{event['ward']}"
     structured_event = {
@@ -245,6 +268,16 @@ html_template = """<!DOCTYPE html>
             padding: 0;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+        }
+
         html, body {
             width: 100%;
             max-width: 100%;
@@ -326,7 +359,7 @@ html_template = """<!DOCTYPE html>
         /* ヘッダー */
         header {
             width: 100%;
-            padding: 30px 0 45px;
+            padding: 30px 0 26px;
             position: relative;
         }
 
@@ -403,6 +436,64 @@ html_template = """<!DOCTYPE html>
             display: inline-block;
         }
 
+        /* もくじ */
+        .toc {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px 42px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 22px;
+        }
+
+        .toc-heading {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--primary-color);
+        }
+
+        .toc-group {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .toc-group-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .toc-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .toc-link {
+            display: inline-block;
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+            font-size: 0.86rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .toc-link:hover {
+            background-color: var(--cell-hover-bg);
+            color: var(--primary-color);
+        }
+
         /* カレンダーメインレイアウト */
         .main-container {
             max-width: 1100px;
@@ -424,6 +515,7 @@ html_template = """<!DOCTYPE html>
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             max-width: 100%;
             overflow: hidden;
+            scroll-margin-top: 24px;
         }
 
         .month-title {
@@ -583,6 +675,7 @@ html_template = """<!DOCTYPE html>
             padding: 30px;
             margin-bottom: 24px;
             line-height: 1.8;
+            scroll-margin-top: 24px;
         }
 
         .seo-section h2 {
@@ -983,7 +1076,7 @@ html_template = """<!DOCTYPE html>
             
             /* ヘッダー */
             header {
-                padding: 20px 10px 30px;
+                padding: 20px 10px 18px;
             }
             .header-inner {
                 padding: 0 10px;
@@ -1015,6 +1108,23 @@ html_template = """<!DOCTYPE html>
             .header-action-btn {
                 font-size: 0.85rem;
                 padding: 8px 16px;
+            }
+            
+            /* もくじ */
+            .toc {
+                padding: 0 10px 26px;
+                gap: 10px 14px;
+            }
+            .toc-heading {
+                width: 100%;
+                text-align: center;
+            }
+            .toc-group-label {
+                font-size: 0.78rem;
+            }
+            .toc-link {
+                font-size: 0.8rem;
+                padding: 6px 12px;
             }
             
             /* メインコンテナ */
@@ -1175,6 +1285,22 @@ html_template = """<!DOCTYPE html>
             <p>令和8年開催の公式アナウンス一覧</p>
         </div>
     </header>
+
+    <nav class="toc" aria-labelledby="toc-heading">
+        <h2 class="toc-heading" id="toc-heading">もくじ</h2>
+        <div class="toc-group">
+            <p class="toc-group-label">月ごとのカレンダー</p>
+            <ul class="toc-list" role="list">
+__TOC_MONTH_LINKS__
+            </ul>
+        </div>
+        <div class="toc-group">
+            <p class="toc-group-label">セクション</p>
+            <ul class="toc-list" role="list">
+__TOC_SECTION_LINKS__
+            </ul>
+        </div>
+    </nav>
 
     <div class="main-container" id="calendarContainer"></div>
 
@@ -1416,11 +1542,21 @@ __STATIC_EVENT_ROWS__
                     .map(Number)
                     .sort((a, b) => a - b)
                     .forEach(month => renderCalendar(month, calendarEvents));
+
+                scrollToHashTarget();
             })
             .catch(err => {
                 console.error('Failed to load events data:', err);
                 // エラー時のフォールバック表示などが必要ならここに記述
             });
+
+        function scrollToHashTarget() {
+            if (!window.location.hash) return;
+            const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+            if (target) {
+                target.scrollIntoView({ block: 'start' });
+            }
+        }
 
         const englishMonthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
@@ -1432,6 +1568,7 @@ __STATIC_EVENT_ROWS__
             const calendarContainer = document.getElementById('calendarContainer');
             const section = document.createElement('section');
             section.className = 'month-section';
+            section.id = `month-${month}`;
 
             const title = document.createElement('h2');
             title.className = 'month-title';
@@ -1893,6 +2030,8 @@ with open(html_output_path, 'w', encoding='utf-8') as f:
         html_template
         .replace('__STRUCTURED_DATA_JSON__', structured_data_json)
         .replace('__STATIC_EVENT_ROWS__', static_event_rows)
+        .replace('__TOC_MONTH_LINKS__', toc_month_links)
+        .replace('__TOC_SECTION_LINKS__', toc_section_links)
         .replace('__UPDATED_DATE__', updated_date)
     )
 print(f"HTML View generated at {html_output_path}")
