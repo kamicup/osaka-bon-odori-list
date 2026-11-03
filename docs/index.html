@@ -233,6 +233,11 @@
             transition: all 0.2s;
         }
 
+        a.header-action-btn {
+            display: inline-block;
+            text-decoration: none;
+        }
+
         .header-action-btn:hover {
             background: var(--cell-hover-bg);
             border-color: var(--primary-color);
@@ -1086,6 +1091,7 @@
             <div class="header-actions">
                 <div class="header-action-group">
                     <button class="header-action-btn" id="submissionBtn" type="button">情報を投稿</button>
+                    <a class="header-action-btn" href="./events.ics" download>ICSダウンロード</a>
                     <button class="header-action-btn install-btn" id="installBtn" type="button">アプリに追加</button>
                     <button class="header-action-btn" id="reloadBtn" type="button">再読み込み</button>
                     <button class="header-action-btn theme-switch" id="themeBtn" type="button">ライトモードにする</button>
@@ -1124,6 +1130,7 @@
             <h2 id="about-heading">大阪市の盆踊り・夏祭り日程（2026年）</h2>
             <p>大阪市内で2026年夏に開催される盆踊り・夏祭りを、主催者・自治体などの公式発表を確認して掲載しています。日付、会場、区、公式情報を確認し、参加前には主催者の最新発表をご確認ください。</p>
             <p>最終更新日：<time datetime="2026-11-03">2026-11-03</time>。カレンダーで日付を選ぶと、当日の開催情報を確認できます。</p>
+            <p>掲載日程はiCal形式の<a href="./events.ics" download>events.ics</a>として一括ダウンロードでき、Googleカレンダーやスマートフォン純正のカレンダーアプリ（CalDAV/ICS対応）に取り込めます。</p>
         </section>
 
         <section class="seo-section" aria-labelledby="list-heading">

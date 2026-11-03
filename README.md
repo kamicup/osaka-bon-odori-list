@@ -17,6 +17,7 @@
     *   **一般公開用URL (Webで直接開く)**: [https://kamicup.github.io/osaka-bon-odori-list/](https://kamicup.github.io/osaka-bon-odori-list/)
     *   **ローカルファイル**: [docs/index.html](file:///Users/yoshikazuhashimoto/tmp/docs/index.html)
     *   **データソースJSON**: [docs/events.json](file:///Users/yoshikazuhashimoto/tmp/docs/events.json) (※HTMLビューと完全に分離されたデータソース。このファイルをメンテすることで将来的にシステム化可能です)
+    *   **iCalデータ (ICS)**: `docs/events.ics` (※Googleカレンダーや純正カレンダーアプリに一括取り込み・購読できるiCal形式のデータソース。ページ上部の「ICSダウンロード」から取得できます)
     *   **GitHub Pages公開**: 本ファイルは GitHub Pages にホスティングされ、上記URLで全世界に公開されています。
     *   **PWA（アプリ化）対応**: スマホで開いた際、ブラウザの「ホーム画面に追加」（iOS Safari）や「アプリをインストール」（Android Chrome）を押すことで、スマホ上に独立したアプリとして登録できます。登録後は、ブラウザのツールバー等が隠れたネイティブアプリ同様の「全画面表示（スタンドアロン）」で快適に起動します。
     *   **インタラクティブ仕様**: カレンダーの日付マスをクリックすると、その日に開催されるすべての盆踊りの詳細（お祭り名称、会場場所、特記事項、情報ソースURLへの直接リンク）がポップアップモーダルで綺麗に表示されます。
@@ -34,6 +35,7 @@
 ├── docs/                   # GitHub Pages公開用フォルダ
 │   ├── index.html          # ★HTMLビュー（events.json を非同期ロードして動的にカレンダーを描画）
 │   ├── events.json         # ★カレンダーの純粋なデータソース（JSON形式）
+│   ├── events.ics          # ★カレンダーのiCalデータ（カレンダーアプリ取り込み・CalDAV購読用）
 │   ├── submission-config.js # 匿名投稿フォームのAPI URL設定
 │   ├── manifest.json       # PWAウェブアプリ設定マニフェスト
 │   ├── sw.js               # PWA用サービスワーカー（events.json を含む静的キャッシュ制御）

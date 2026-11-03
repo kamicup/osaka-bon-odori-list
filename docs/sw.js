@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bonodori-cache-v31';
+const CACHE_NAME = 'bonodori-cache-v32';
 const urlsToCache = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const urlsToCache = [
   './sitemap.xml',
   './manifest.json',
   './events.json',
+  './events.ics',
   './submission-config.js',
   './icon-192.png',
   './icon-512.png'
@@ -48,6 +49,7 @@ self.addEventListener('fetch', event => {
     '/submission-config.js',
     '/index.html',
     '/events.json',
+    '/events.ics',
     '/sitemap.xml'
   ];
   const isDynamic = dynamicPaths.some(p => requestUrl.pathname.endsWith(p));
