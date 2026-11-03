@@ -2,7 +2,8 @@ import os
 import re
 import json
 import html
-from datetime import datetime
+import hashlib
+from datetime import datetime, date, timedelta, timezone
 
 # 1. データの読み込みとパース
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -63,6 +64,77 @@ events_json_path = os.path.join(docs_dir, 'events.json')
 with open(events_json_path, 'w', encoding='utf-8') as f:
     json.dump(events, f, ensure_ascii=False, indent=2)
 print(f"Data source JSON generated at {events_json_path}")
+
+# 2.5 iCal (.ics) データソースの書き出し (カレンダーアプリ・CalDAV 取り込み用)
+def ics_escape(text):
+    text = text.replace('\\', '\\\\')
+    text = re.sub(r'\r\n|\r|\n', '\\n', text)
+    text = text.replace(';', '\\;')
+    text = text.replace(',', '\\,')
+    return text
+
+def fold_ics_line(line):
+    chunks = []
+    current = ''
+    current_size = 0
+    limit = 75
+    for char in line:
+        char_size = len(char.encode('utf-8'))
+        if current_size + char_size > limit:
+            chunks.append(current)
+            current = char
+            current_size = char_size
+            limit = 74
+        else:
+            current += char
+            current_size += char_size
+    chunks.append(current)
+    return '\r\n '.join(chunks)
+
+def build_vevent(event):
+    start_date = date(2026, event['dates'][0][0], event['dates'][0][1])
+    end_date = date(2026, event['dates'][-1][0], event['dates'][-1][1]) + timedelta(days=1)
+    uid_seed = f"{event['name']}|{event['place']}|{event['date_str']}"
+    uid = f"{hashlib.sha1(uid_seed.encode('utf-8')).hexdigest()}@osaka-bon-odori-list"
+    address = "大阪府" if event['ward'] == "大阪市外" else f"大阪府大阪市{event['ward']}"
+    location = f"{event['place']}（{address}）"
+    description = f"{event['date_str']} / 会場: {event['place']} / {event['notes']}"
+    if event['source_url'] and event['source_url'] != '#':
+        description += f" 情報源: {event['source_url']}"
+    lines = [
+        'BEGIN:VEVENT',
+        f'UID:{uid}',
+        f'DTSTAMP:{ics_dtstamp}',
+        f'DTSTART;VALUE=DATE:{start_date.strftime("%Y%m%d")}',
+        f'DTEND;VALUE=DATE:{end_date.strftime("%Y%m%d")}',
+        f"SUMMARY:{ics_escape(event['name'])}",
+        f"LOCATION:{ics_escape(location)}",
+        f'DESCRIPTION:{ics_escape(description)}',
+    ]
+    if event['source_url'] and event['source_url'] != '#':
+        lines.append(f"URL:{event['source_url']}")
+    lines.append('END:VEVENT')
+    return '\r\n'.join(fold_ics_line(line) for line in lines) + '\r\n'
+
+ics_dtstamp = datetime.fromtimestamp(os.path.getmtime(report_path), timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+ics_calendar_name = "大阪市の盆踊り 2026"
+ics_lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//kamicup//osaka-bon-odori-list//JA',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    f'X-WR-CALNAME:{ics_escape(ics_calendar_name)}',
+    'X-WR-TIMEZONE:Asia/Tokyo',
+]
+ics_content = '\r\n'.join(fold_ics_line(line) for line in ics_lines) + '\r\n'
+ics_content += ''.join(build_vevent(event) for event in events)
+ics_content += 'END:VCALENDAR\r\n'
+
+ics_output_path = os.path.join(docs_dir, 'events.ics')
+with open(ics_output_path, 'w', encoding='utf-8', newline='') as f:
+    f.write(ics_content)
+print(f"iCal data source generated at {ics_output_path}")
 
 site_url = "https://kamicup.github.io/osaka-bon-odori-list/"
 site_title = "大阪市の盆踊り 2026年｜日程・会場一覧カレンダー"
@@ -421,6 +493,11 @@ html_template = """<!DOCTYPE html>
             font-weight: 500;
             font-size: 0.9rem;
             transition: all 0.2s;
+        }
+
+        a.header-action-btn {
+            display: inline-block;
+            text-decoration: none;
         }
 
         .header-action-btn:hover {
@@ -1276,6 +1353,7 @@ html_template = """<!DOCTYPE html>
             <div class="header-actions">
                 <div class="header-action-group">
                     <button class="header-action-btn" id="submissionBtn" type="button">情報を投稿</button>
+                    <a class="header-action-btn" href="./events.ics" download>ICSダウンロード</a>
                     <button class="header-action-btn install-btn" id="installBtn" type="button">アプリに追加</button>
                     <button class="header-action-btn" id="reloadBtn" type="button">再読み込み</button>
                     <button class="header-action-btn theme-switch" id="themeBtn" type="button">ライトモードにする</button>
@@ -1309,6 +1387,7 @@ __TOC_SECTION_LINKS__
             <h2 id="about-heading">大阪市の盆踊り・夏祭り日程（2026年）</h2>
             <p>大阪市内で2026年夏に開催される盆踊り・夏祭りを、主催者・自治体などの公式発表を確認して掲載しています。日付、会場、区、公式情報を確認し、参加前には主催者の最新発表をご確認ください。</p>
             <p>最終更新日：<time datetime="__UPDATED_DATE__">__UPDATED_DATE__</time>。カレンダーで日付を選ぶと、当日の開催情報を確認できます。</p>
+            <p>掲載日程はiCal形式の<a href="./events.ics" download>events.ics</a>として一括ダウンロードでき、Googleカレンダーやスマートフォン純正のカレンダーアプリ（CalDAV/ICS対応）に取り込めます。</p>
         </section>
 
         <section class="seo-section" aria-labelledby="list-heading">
