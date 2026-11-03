@@ -1982,7 +1982,22 @@ __STATIC_EVENT_ROWS__
                 if ('serviceWorker' in navigator) {
                     const registration = await navigator.serviceWorker.getRegistration();
                     if (registration) {
+                        const controllerChanged = new Promise(resolve => {
+                            let done = false;
+                            const finish = () => {
+                                if (done) return;
+                                done = true;
+                                navigator.serviceWorker.removeEventListener('controllerchange', finish);
+                                clearTimeout(timer);
+                                resolve();
+                            };
+                            const timer = setTimeout(finish, 5000);
+                            navigator.serviceWorker.addEventListener('controllerchange', finish);
+                        });
                         await registration.update();
+                        if (registration.installing || registration.waiting) {
+                            await controllerChanged;
+                        }
                     }
                 }
 

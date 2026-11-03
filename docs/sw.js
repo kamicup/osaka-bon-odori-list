@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bonodori-cache-v30';
+const CACHE_NAME = 'bonodori-cache-v31';
 const urlsToCache = [
   './',
   './index.html',
@@ -13,8 +13,17 @@ const urlsToCache = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    Promise.all(
+      urlsToCache.map(url =>
+        fetch(url, { cache: 'reload' })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Failed to cache ${url}: ${response.status}`);
+            }
+            return caches.open(CACHE_NAME).then(cache => cache.put(url, response));
+          })
+      )
+    )
       .then(() => self.skipWaiting())
   );
 });
@@ -35,9 +44,17 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
-  if (requestUrl.pathname.endsWith('/submission-config.js')) {
+  const dynamicPaths = [
+    '/submission-config.js',
+    '/index.html',
+    '/events.json',
+    '/sitemap.xml'
+  ];
+  const isDynamic = dynamicPaths.some(p => requestUrl.pathname.endsWith(p));
+
+  if (isDynamic) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then(response => {
           const responseClone = response.clone();
           event.waitUntil(
